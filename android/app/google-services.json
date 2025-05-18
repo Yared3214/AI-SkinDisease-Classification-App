@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "695402546609",
+    "project_id": "ai-skindisease-classification",
+    "storage_bucket": "ai-skindisease-classification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695402546609:android:5f6b6840a3ea1af332a990",
+        "android_client_info": {
+          "package_name": "com.chattingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvtsTfhHMGBunDG2wgn2Hh0mMlEjKtOqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
