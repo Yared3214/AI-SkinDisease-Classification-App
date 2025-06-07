@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminHomeScreen from '../Screens/AdminHomeScreen';
 import PostProductScreen from '../Screens/PostProductScreen';
 import VerifyExpertsScreen from '../Screens/VerifyExpertsScreen';
+import ExpertDetailScreen from '../Screens/ExpertDetailScreen';
 
 export default function HomeScreenStackNav() {
     const Stack = createNativeStackNavigator();
@@ -19,7 +20,7 @@ export default function HomeScreenStackNav() {
       options={{
         headerShown: false
       }}/>
-      <Stack.Screen name="expert-detail" component={VerifyExpertsScreen}
+      <Stack.Screen name="expert-detail" component={ExpertDetailScreen}
       options={{
         headerShown: false
       }}/>

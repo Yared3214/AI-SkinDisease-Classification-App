@@ -101,6 +101,7 @@ const AvailabilityScreen = () => {
         .doc(expertId);
 
       batch.set(expertAvailabilityRef, {
+        expertId: expertId,
         availabilityId: expertId,
         lastUpdated: firestore.FieldValue.serverTimestamp()
       }, { merge: true });

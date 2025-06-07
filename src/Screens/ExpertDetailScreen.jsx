@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ScrollView } from 'react-native';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ScrollView, Linking } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const ExpertDetailScreen = () => {
@@ -10,36 +9,42 @@ const ExpertDetailScreen = () => {
   const [reason, setReason] = useState('');
 
   const handleApprove = async () => {
-    try {
-      const userRef = doc(FIRESTORE_DB, 'users', expert.id);
-      await updateDoc(userRef, { role: 'expert' });
-      await deleteDoc(doc(FIRESTORE_DB, 'expert', expert.id));
-      Alert.alert('Success', 'Expert approved.');
-      navigation.goBack();
-    } catch (err) {
-      console.error('Approve Error:', err);
-      Alert.alert('Error', 'Failed to approve expert.');
-    }
-  };
+  try {
+    const userRef = firestore().collection('users').doc(expert.id);
+    await userRef.update({ role: 'expert' });
 
-  const handleReject = async () => {
-    if (!reason.trim()) {
-      Alert.alert('Missing Reason', 'Please enter a reason for rejection.');
-      return;
-    }
-    try {
-      await deleteDoc(doc(FIRESTORE_DB, 'expert', expert.id));
-      await updateDoc(doc(FIRESTORE_DB, 'users', expert.id), {
-        rejectionReason: reason,
-        role: 'user', // keep role as 'user'
-      });
-      Alert.alert('Rejected', 'Expert application has been rejected.');
-      navigation.goBack();
-    } catch (err) {
-      console.error('Reject Error:', err);
-      Alert.alert('Error', 'Failed to reject expert.');
-    }
-  };
+    await firestore().collection('experts').doc(expert.id).delete();
+
+    Alert.alert('Success', 'Expert approved.');
+    navigation.goBack();
+  } catch (err) {
+    console.error('Approve Error:', err);
+    Alert.alert('Error', 'Failed to approve expert.');
+  }
+};
+
+const handleReject = async () => {
+  if (!reason.trim()) {
+    Alert.alert('Missing Reason', 'Please enter a reason for rejection.');
+    return;
+  }
+
+  try {
+    await firestore().collection('experts').doc(expert.id).delete();
+
+    await firestore().collection('users').doc(expert.id).update({
+      rejectionReason: reason,
+      role: 'user', // retain role as 'user'
+    });
+
+    Alert.alert('Rejected', 'Expert application has been rejected.');
+    navigation.goBack();
+  } catch (err) {
+    console.error('Reject Error:', err);
+    Alert.alert('Error', 'Failed to reject expert.');
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -61,7 +66,11 @@ const ExpertDetailScreen = () => {
         <Text style={styles.value}>{expert.workplace}</Text>
 
         <Text style={styles.label}>Certification Document:</Text>
-        <Text style={[styles.value, { color: '#007bff' }]}>{expert.document}</Text>
+        <TouchableOpacity onPress={() => Linking.openURL(expert.document)}>
+          <Text style={[styles.value, { color: '#007bff', textDecorationLine: 'underline' }]}>
+            View Certification Document
+          </Text>
+        </TouchableOpacity>
 
         <Text style={styles.label}>Rejection Reason (if any):</Text>
         <TextInput
@@ -88,7 +97,7 @@ const ExpertDetailScreen = () => {
 export default ExpertDetailScreen;
 
 const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: '#f0f0f0', flexGrow: 1 },
+  container: { padding: 20, backgroundColor: '#F4FAFA', flexGrow: 1 },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   detailCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#555', marginTop: 10 },

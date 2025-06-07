@@ -27,6 +27,22 @@ const TimeSlotScreen = ({ route }) => {
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [hasPendingAppointment, setHasPendingAppointment] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const fetchData = async() => {
+      if (!currentUser) return;
+
+    const userDoc = await firestore()
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+          if (userDoc.exists) {
+            setUserName(userDoc.data().name);
+          }
+    }
+    fetchData();
+  })
 
 
   // Real-time availability listener
@@ -161,7 +177,7 @@ const TimeSlotScreen = ({ route }) => {
               // 6. Create appointment
               const appointmentData = {
                 userId: currentUser.uid,
-                userName: currentUser.displayName || 'User',
+                userName: userName || 'User',
                 expertId,
                 expertName,
                 date: formattedDBDate,

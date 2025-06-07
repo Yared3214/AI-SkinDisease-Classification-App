@@ -1,60 +1,80 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+
+const DISEASE_CLASSES = [
+  "Actinic keratoses (akiec)",
+  "Basal cell carcinoma (bcc)",
+  "Benign keratosis-like lesions (bkl)",
+  "Dermatofibroma (df)",
+  "Melanocytic Nevi (nv)",
+  "Melanoma (mel)",
+  "Vascular lesions (vasc)",
+];
 
 const ImageAnalysisResultsScreen = () => {
-  // Sample Image (Replace with dynamic image source)
-  const uploadedImage = 'https://via.placeholder.com/300'; // Replace with actual URI
+  const route = useRoute();
+  const { imageUri, result } = route.params || {};
+
+  const topPredictions = result?.predictions
+    ?.map((prob, index) => ({ label: DISEASE_CLASSES[index], prob }))
+    .sort((a, b) => b.prob - a.prob)
+    .slice(0, 3);
+
+  const mainCondition = topPredictions?.[0];
+  const otherConditions = topPredictions?.slice(1);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
       <Text style={styles.header}>Image Analysis Results</Text>
 
-      {/* Uploaded Image */}
-      <Image source={{ uri: uploadedImage }} style={styles.uploadedImage} />
+      <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
       <Text style={styles.imageLabel}>Uploaded Image</Text>
 
       <Text style={styles.infoText}>
         These results are for informational purposes only. Consult a dermatologist for a detailed diagnosis.
       </Text>
 
-      {/* Condition Detected */}
-      <View style={styles.resultBox}>
-        <Text style={styles.conditionTitle}>Condition Detected: <Text style={styles.highlight}>Eczema</Text></Text>
-        <Text style={styles.confidence}>Confidence: 85%</Text>
-        <Text style={styles.description}>
-          Eczema is a condition characterized by itchy, inflamed skin...
-        </Text>
+      {mainCondition && (
+        <View style={styles.resultBox}>
+          <Text style={styles.conditionTitle}>
+            Condition Detected: <Text style={styles.highlight}>{mainCondition.label}</Text>
+          </Text>
+          <Text style={styles.confidence}>
+            Confidence: {(mainCondition.prob * 100).toFixed(2)}%
+          </Text>
+          <Text style={styles.description}>
+            {/* You can optionally load a description per disease */}
+            {mainCondition.label} may require further medical assessment. This prediction is based on AI analysis.
+          </Text>
 
-        {/* Additional Insights */}
-        <Text style={styles.subTitle}>Additional Insights</Text>
-        <View style={styles.insight}>
-          <Text style={styles.insightText}>Psoriasis</Text>
-          <Text style={styles.confidence}>Confidence: 60%</Text>
+          <Text style={styles.subTitle}>Additional Insights</Text>
+          {otherConditions?.map((item, idx) => (
+            <View key={idx} style={styles.insight}>
+              <Text style={styles.insightText}>{item.label}</Text>
+              <Text style={styles.confidence}>
+                Confidence: {(item.prob * 100).toFixed(2)}%
+              </Text>
+            </View>
+          ))}
         </View>
-        <View style={{ borderBottomColor: "#ccc", borderBottomWidth: 1, marginVertical: 10 }} />
-        <View style={styles.insight}>
-          <Text style={styles.insightText}>Contact Dermatitis</Text>
-          <Text style={styles.confidence}>Confidence: 45%</Text>
-        </View>
-      </View>
+      )}
 
-      {/* Recommended Actions */}
       <View style={styles.resultBox}>
         <Text style={styles.subTitle}>Recommended Actions</Text>
         <Text style={styles.listItem}>• Consult a dermatologist</Text>
-        <Text style={styles.listItem}>• Avoid using harsh soaps</Text>
+        <Text style={styles.listItem}>• Avoid self-medication</Text>
+        <Text style={styles.listItem}>• Monitor the lesion for changes</Text>
 
         <Text style={styles.subTitle}>Helpful Resources</Text>
         <TouchableOpacity>
-          <Text style={styles.linkText}>Read more about eczema</Text>
+          <Text style={styles.linkText}>Read more about {mainCondition?.label}</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.linkText}>View informational video</Text>
+          <Text style={styles.linkText}>Watch a dermatologist explainer video</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Buttons */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.saveButton}>
           <Text style={styles.buttonText}>Save Report</Text>
@@ -80,8 +100,8 @@ const styles = StyleSheet.create({
   confidence: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 5 },
   description: { color: '#555', marginBottom: 10 },
   subTitle: { fontSize: 15, fontWeight: 'bold', marginTop: 10, marginBottom: 5, color: '#6BA292' },
-  insight: { flexDirection: 'column', paddingVertical: 5, paddingLeft: '20px' },
-  insightText: { fontSize: 14, fontWeight: '500', paddingBottom: '10px', color: '#007bff' },
+  insight: { flexDirection: 'column', paddingVertical: 5, paddingLeft: 20 },
+  insightText: { fontSize: 14, fontWeight: '500', paddingBottom: 10, color: '#007bff' },
   listItem: { fontSize: 14, color: '#555', paddingVertical: 2 },
   linkText: { color: '#007bff', fontSize: 14, marginVertical: 5 },
 

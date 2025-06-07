@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Text,
   TextInput,
@@ -7,13 +7,29 @@ import {
   Alert,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { addDoc, collection } from 'firebase/firestore';
-import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'react-native-image-picker';
+import firestore from '@react-native-firebase/firestore';
+import DropDownPicker from 'react-native-dropdown-picker';
+import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
+
+
+const CLOUD_NAME = 'dfnzk8ip2';
+const UPLOAD_PRESET = 'educational_resources';
 
 const PostProductScreen = () => {
+  const navigation = useNavigation();
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [categoryItems, setCategoryItems] = useState([
+    { label: 'Skincare', value: 'skincare' },
+    { label: 'Haircare', value: 'haircare' },
+    { label: 'Bodycare', value: 'bodycare' },
+    { label: 'Others', value: 'others' },
+  ]);
+  const [categoryValue, setCategoryValue] = useState('skincare');
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -25,27 +41,53 @@ const PostProductScreen = () => {
     sellerPhone: '',
   });
 
+  useEffect(() => {
+  handleChange('category', categoryValue);
+}, [categoryValue]);
+
   const handleChange = (field, value) => {
     setForm({ ...form, [field]: value });
   };
 
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission required', 'We need access to your gallery.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-      handleChange('image', uri);
-    }
-  };
+  const pickImage = () => {
+      const options = {
+        mediaType: 'photo',
+        quality: 1,
+        includeBase64: false,
+      };
+  
+      ImagePicker.launchImageLibrary(options, (response) => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        } else if (response.errorCode) {
+          console.error('ImagePicker Error: ', response.errorMessage);
+        } else if (response.assets && response.assets.length > 0) {
+          const uri = response.assets[0].uri;
+          handleChange('image', uri);
+        }
+      });
+    };
+  
+    // Upload Image to Cloudinary
+    const uploadImageToCloudinary = async (imageUri) => {
+      try {
+        const data = new FormData();
+        data.append('file', { uri: imageUri, type: 'image/jpeg', name: 'upload.jpg' });
+        data.append('upload_preset', UPLOAD_PRESET);
+        data.append('cloud_name', CLOUD_NAME);
+  
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+          data,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+  
+        return response.data.secure_url;
+      } catch (error) {
+        console.error('Cloudinary Upload Error:', error);
+        return null;
+      }
+    };
 
   const handleSubmit = async () => {
     if (
@@ -54,33 +96,40 @@ const PostProductScreen = () => {
       !form.category ||
       !form.image ||
       !form.price ||
-      !form.rating ||
       !form.sellerEmail ||
       !form.sellerPhone
     ) {
       Alert.alert('Missing Fields', 'Please fill in all fields.');
       return;
     }
-
+    setLoading(true);
     try {
-      await addDoc(collection(FIRESTORE_DB, 'products'), {
-        ...form,
-        createdAt: new Date(),
-      });
+      const imageUrl = await uploadImageToCloudinary(form.image);
+          if (!imageUrl) {
+            throw new Error('Image upload failed.');
+          }
+      await firestore().collection('products').add({
+      ...form,
+      image: imageUrl, // 🔄 use uploaded URL
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
       Alert.alert('Success', 'Product posted!');
       setForm({
         name: '',
         description: '',
         category: '',
-        image: '',
+        image: imageUrl,
         price: '',
         rating: '',
         sellerEmail: '',
         sellerPhone: '',
       });
+      navigation.goBack();
     } catch (err) {
       Alert.alert('Error', 'Could not post product.');
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,17 +155,17 @@ const PostProductScreen = () => {
       />
 
       <Text style={styles.label}>Category</Text>
-      <Picker
-        selectedValue={form.category}
-        onValueChange={(value) => handleChange('category', value)}
+      <DropDownPicker
+        open={categoryOpen}
+        value={categoryValue}
+        items={categoryItems}
+        setOpen={setCategoryOpen}
+        setValue={setCategoryValue}
+        setItems={setCategoryItems}
+        placeholder="Select a category"
         style={styles.input}
-      >
-        <Picker.Item label="Select a category" value="" />
-        <Picker.Item label="Skincare" value="skincare" />
-        <Picker.Item label="Haircare" value="haircare" />
-        <Picker.Item label="Bodycare" value="bodycare" />
-        <Picker.Item label="Others" value="others" />
-      </Picker>
+        dropDownContainerStyle={{ borderColor: '#ccc' }}
+      />
 
       <Text style={styles.label}>Image</Text>
       <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
@@ -140,18 +189,6 @@ const PostProductScreen = () => {
         placeholder="e.g. 29.99"
       />
 
-      <Text style={styles.label}>Rating (1 - 5)</Text>
-      <Picker
-        selectedValue={form.rating}
-        onValueChange={(value) => handleChange('rating', value)}
-        style={styles.input}
-      >
-        <Picker.Item label="Select rating" value="" />
-        {[1, 2, 3, 4, 5].map((rate) => (
-          <Picker.Item key={rate} label={`${rate}`} value={`${rate}`} />
-        ))}
-      </Picker>
-
       <Text style={styles.label}>Seller Email</Text>
       <TextInput
         style={styles.input}
@@ -171,7 +208,7 @@ const PostProductScreen = () => {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Post Product</Text>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Post Product</Text>}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -183,6 +220,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 40,
+    backgroundColor: '#F4FAFA',
   },
   heading: {
     fontSize: 22,

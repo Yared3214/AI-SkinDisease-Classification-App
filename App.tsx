@@ -21,6 +21,9 @@ import DrawerNavigator from './src/Navigation/DrawerNavigator';
 import LoginSignupScreenStackNav from './src/Navigation/LoginSignupScreenStackNav';
 import { CometChat } from '@cometchat/chat-sdk-react-native';
 import { CometChatUIKit } from '@cometchat/chat-uikit-react-native';
+import { Buffer } from 'buffer';
+
+global.Buffer = Buffer;
 
 /* -------------------------------------------------------------------------- */
 /*  ⚙️  Replace the placeholders below with your own CometChat credentials.    */
@@ -54,38 +57,47 @@ function App(): React.JSX.Element {
                     } catch (err) {
                       console.error('[CometChatUIKit] init/login error', err);
                     }
-        try {
-          const loggedInUser = await CometChat.getLoggedinUser();
-          if (!loggedInUser) {
-            console.log('No CometChat session, logging in...');
-            await CometChat.login(uid, AUTH_KEY); // 🔒 This uses your Firebase UID
-          } else {
-            console.log('CometChat already logged in as:', loggedInUser.getUid());
-          }
-        } catch (error) {
-          console.error('CometChat login error:', error);
-        }
+        // try {
+        //   const loggedInUser = await CometChat.getLoggedinUser();
+        //   if (!loggedInUser) {
+        //     console.log('No CometChat session, logging in...');
+        //     await CometChat.login(uid, AUTH_KEY); // 🔒 This uses your Firebase UID
+        //   } else {
+        //     console.log('CometChat already logged in as:', loggedInUser.getUid());
+        //   }
+        // } catch (error) {
+        //   console.error('CometChat login error:', error);
+        // }
       };
       const unsubscribe = auth().onAuthStateChanged(async (authenticatedUser) => {
-        setUser(authenticatedUser);
-        initializeCometChat(authenticatedUser.uid);
+    console.log('Auth state changed:', authenticatedUser);
+    
+    if (authenticatedUser) {
+      setUser(authenticatedUser);
+      initializeCometChat(authenticatedUser.uid);
+      
+      try {
+        const userDocRef = firestore().collection('users').doc(authenticatedUser.uid);
+        const userSnap = await userDocRef.get();
 
-        if (authenticatedUser) {
-          try {
-            const userDocRef = firestore().collection('users').doc(authenticatedUser.uid);
-            const userSnap = await userDocRef.get();
-
-            if (userSnap.exists) {
-              const userData = userSnap.data();
-              setRole(userData?.role || 'user');
-            }
-          } catch (error) {
-            console.error('Error fetching user role:', error);
-          }
+        if (userSnap.exists) {
+          const userData = userSnap.data();
+          setRole(userData?.role || 'user');
         }
-        setLoading(false);
-      });
-      return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+
+      setLoading(false);
+    } else {
+      console.log('User is not authenticated');
+      setUser(null);      // Optional but recommended
+      setRole(null);      // Optional
+      setLoading(false);
+    }
+  });
+
+  return () => unsubscribe();
     }, []);
 
   if (loading) {

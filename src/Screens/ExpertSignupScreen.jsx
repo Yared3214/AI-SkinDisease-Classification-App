@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import DocumentPicker from 'react-native-document-picker';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { setDoc, doc } from 'firebase/firestore';
-import { FIREBASE_AUTH, FIRESTORE_DB } from '../../FireBaseConfig/FirebaseConfig';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../supabaseClient';
+import RNBlobUtil from 'react-native-blob-util';
+import { Buffer } from 'buffer';
+import { CometChat } from '@cometchat/chat-sdk-react-native';
 
 const ExpertSignupScreen = () => {
   const navigation = useNavigation();
@@ -19,60 +22,135 @@ const ExpertSignupScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const validateInputs = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/; // Min 6 chars, 1 letter, 1 number
+
+    if (!name.trim()) return "Full Name is required.";
+    if (!emailRegex.test(email)) return "Please enter a valid email address.";
+    if (!passwordRegex.test(password)) return "Password must be at least 6 characters, including a letter and a number.";
+    if (!licenseNumber.trim()) return "Medical License Number is required.";
+    if (licenseNumber.length < 5) return "License Number seems too short.";
+    if (!qualifications.trim()) return "Qualifications are required.";
+    if (!workplace.trim()) return "Workplace is required.";
+    if (!document) return "Please upload a certification document.";
+    return null;
+  };
+
   // const pickDocument = async () => {
   //   let result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
   //   if (!result.canceled) {
   //     setDocument(result.uri);
   //   }
   // };
-  const pickDocument = async () => {
-        try {
-          const result = await DocumentPicker.pickSingle({
-            type: [DocumentPicker.types.allFiles], // Or specify MIME types
-          });
-          if (result.canceled) {
-            alert('No file selected.');
-            return;
-          }
-          setDocument(result.uri);  // For SDK 49+
-          console.log(result);
-        } catch (error) {
-          console.error('Error picking document:', error);
-          alert('Something went wrong.');
-        }
-      };
+
+const pickDocument = async () => {
+  try {
+    const result = await DocumentPicker.pickSingle({
+      type: [DocumentPicker.types.pdf], // Or allFiles
+    });
+
+    if (result?.uri) {
+      setDocument(result);
+      console.log("Selected document:", result);
+    }
+  } catch (error) {
+    if (DocumentPicker.isCancel(error)) {
+      console.log("User canceled document picker");
+    } else {
+      console.error("Error picking document:", error);
+      Alert.alert("Something went wrong.");
+    }
+  }
+};
+
+
+
+
+const uploadToSupabase = async (file) => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}.${fileExt}`;
+  const filePath = `documents/${fileName}`;
+
+  // Read file as base64 from content:// URI
+  const base64Data = await RNBlobUtil.fs.readFile(file.uri, 'base64');
+
+  const fileBuffer = Buffer.from(base64Data, 'base64');
+
+  const { data, error } = await supabase.storage
+    .from('experts-credentials')
+    .upload(filePath, fileBuffer, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("Supabase upload error:", error);
+    throw new Error("File upload failed");
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('experts-credentials')
+    .getPublicUrl(filePath);
+
+  return publicUrlData.publicUrl;
+};
+
+
+
 
   const signUpExpert = async () => {
-    if (!name || !email || !password || !licenseNumber || !qualifications || !workplace || !document) {
-      setError('All fields are required, including document upload.');
+    const validationError = validateInputs();
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
-      // ✅ Sign out the user after creating the account
-      await signOut(FIREBASE_AUTH);
+      const fileUrl = await uploadToSupabase(document);
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
-      await setDoc(doc(FIRESTORE_DB, 'experts', user.uid), {
+
+       await user.updateProfile({
+        displayName: name,
+      });
+
+      // Save expert profile
+      await firestore().collection("experts").doc(user.uid).set({
         licenseNumber,
         qualifications,
         workplace,
-        document,
+        document: fileUrl, // NOTE: This is a URI, not a file in cloud storage
       });
 
-      await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+      // Save user profile
+      await firestore().collection("users").doc(user.uid).set({
         uid: user.uid,
         name,
         email,
-        role: 'user',
-        createdAt: new Date(),
+        role: "user",
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
-      alert('Signup Successful! Your profile will be reviewed.');
-      navigation.navigate('login');
-    } catch (error) {
-      setError(error.message);
+      const cometChatUser = new CometChat.User(user.uid); // Using Firebase UID as CometChat UID
+          cometChatUser.setName(name.trim());
+          // Add additional CometChat user attributes if needed
+          cometChatUser.setMetadata({
+            email: email.trim().toLowerCase(),
+            firebase_uid: user.uid,
+          });
+
+      const authKey = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // Replace with your actual auth key
+      
+          await CometChat.createUser(cometChatUser, authKey);
+          console.log('CometChat user created successfully');
+
+      Alert.alert("Success", "Signup Successful! Your profile will be reviewed.");
+      navigation.navigate("login");
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { CometChat } from '@cometchat/chat-sdk-react-native';
 
 export default function ExpertAppointmentsScreen() {
   const [appointments, setAppointments] = useState([]);
@@ -50,9 +51,9 @@ export default function ExpertAppointmentsScreen() {
     return () => unsubscribe();
   }, []);
 
-  const handleResponse = async (appointmentId, action) => {
+  const handleResponse = async (appointmentId, action, userId, time, displayDate) => {
+    setLoading(true);
     try {
-      setLoading(true);
       await firestore()
         .collection('appointments')
         .doc(appointmentId)
@@ -69,6 +70,19 @@ export default function ExpertAppointmentsScreen() {
         `Appointment ${action} successfully`,
         [{ text: 'OK' }]
       );
+      let receiverID = userId;
+      let messageText = 'Success, ' + `Appointment booked for ${displayDate} at ${time}`;
+      let receiverType = CometChat.RECEIVER_TYPE.USER;
+      
+      let textMessage = new CometChat.TextMessage(receiverID, messageText, receiverType);
+      
+      CometChat.sendMessage(textMessage)
+        .then(message => {
+          console.log('Message sent successfully:', message);
+        })
+        .catch(error => {
+          console.log('Message sending failed with error:', error);
+        });
     } catch (error) {
       console.error('Update error:', error);
       Alert.alert(
@@ -112,13 +126,13 @@ export default function ExpertAppointmentsScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Text style={styles.clientName}>👤 {item.name || 'Unknown User'}</Text>
+              <Text style={styles.clientName}>👤 {item.userName || 'Unknown User'}</Text>
               <Text style={styles.detailText}>📅 {item.date} at {item.time}</Text>
 
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={[styles.button, styles.acceptButton]}
-                  onPress={() => handleResponse(item.id, 'accepted')}
+                  onPress={() => handleResponse(item.id, 'accepted', item.userId, item.time, item.displayDate)}
                 >
                   <Text style={styles.buttonText}>Accept</Text>
                 </TouchableOpacity>
