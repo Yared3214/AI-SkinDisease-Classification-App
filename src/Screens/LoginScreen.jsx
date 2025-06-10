@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform, PermissionsAndroid } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-// import { FIREBASE_AUTH } from '../../FireBaseConfig/FirebaseConfig';
-// import { signInWithEmailAndPassword } from 'firebase/auth';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { CometChatUIKit, UIKitSettings } from '@cometchat/chat-uikit-react-native';
@@ -43,27 +41,15 @@ const LoginScreen = () => {
               await requestPermissions();
 
               // 3️⃣  Login.
+              console.log(uid)
               await CometChatUIKit.login({uid: uid});
               Alert.alert('Success', 'Logged in as user: Unknown');
-              let receiverID = 'yared';
-              let messageText = 'Hello world!';
-              let receiverType = CometChat.RECEIVER_TYPE.USER;
-
-              let textMessage = new CometChat.TextMessage(receiverID, messageText, receiverType);
-
-              CometChat.sendMessage(textMessage)
-                .then(message => {
-                  console.log('Message sent successfully:', message);
-                })
-                .catch(error => {
-          console.log('Message sending failed with error:', error);
-                });
             } catch (err) {
               console.error('[CometChatUIKit] init/login error', err);
             }
     } catch (error) {
       console.error('Sign in error:', error);
-      alert('Sign in failed: ' + error.message);
+      Alert.alert('Sign in failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -175,6 +161,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#FFFFFF',
     borderRadius: 25,
+    color: '#000',
     paddingLeft: 15,
     marginBottom: 15,
     shadowColor: '#000',

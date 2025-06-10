@@ -10,12 +10,14 @@ import AppointmentStackScreen from './AppointmentStackScreen';
 import MyAppointmentsScreen from '../Screens/MyAppointmentsScreen';
 import ExpertAppointmentsScreen from '../Screens/ExpertAppointmentsScreen';
 import ChatScreen from '../Screens/ChatScreen';
+import CustomDrawerContent from '../components/CustomDrawerContent ';
 
 const Drawer = createDrawerNavigator();
 
 export default function DrawerNavigator({userRole}) {
   return (
     <Drawer.Navigator
+    drawerContent={(props) => <CustomDrawerContent {...props} userRole={userRole} />}
       screenOptions={({ route }) => ({
         drawerIcon: ({ color, size }) => {
           let iconName;
@@ -38,12 +40,16 @@ export default function DrawerNavigator({userRole}) {
           }
         },
         drawerActiveTintColor: '#6BA292',
+    //     drawerStyle: {
+    //       backgroundColor: '#e0f2f1', // match your profile section
+    // },
+
       })}
     >
       <Drawer.Screen
         name="home-tabs"
         component={TabNavigation}
-        options={{ title: 'AI SkinDisease Classification' }}
+        options={{ title: 'Home' }}
       />
       <Drawer.Screen name="notifications"
       component={NotificationScreen}

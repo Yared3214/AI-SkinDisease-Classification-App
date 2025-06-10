@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native';
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import ProfileScreen from '../Screens/ProfileScreen';
+import ProfileScreenStackNav from './ProfileScreenStackNav';
 import EducationalResourceScreenStackNav from './EducationalResourceScreenStackNav';
 import HomeScreenStackNav from './HomeScreenStackNav';
 import ProductsScreenStackNav from './ProductsScreenStackNav';
@@ -33,7 +33,7 @@ export default function TabNavigation() {
                   <Ionicons name='person-outline' size={size} color={color} />
                 )
                 
-              }} name='Profile' component={ProfileScreen} />
+              }} name='Profile' component={ProfileScreenStackNav} />
             </Tab.Navigator>
     )}
 

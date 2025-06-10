@@ -22,6 +22,7 @@ import LoginSignupScreenStackNav from './src/Navigation/LoginSignupScreenStackNa
 import { CometChat } from '@cometchat/chat-sdk-react-native';
 import { CometChatUIKit } from '@cometchat/chat-uikit-react-native';
 import { Buffer } from 'buffer';
+import { useNotification } from './src/notifications/useNotification';
 
 global.Buffer = Buffer;
 
@@ -99,6 +100,8 @@ function App(): React.JSX.Element {
 
   return () => unsubscribe();
     }, []);
+
+    useNotification()
 
   if (loading) {
     return (

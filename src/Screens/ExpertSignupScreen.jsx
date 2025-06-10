@@ -131,6 +131,9 @@ const uploadToSupabase = async (file) => {
         email,
         role: "user",
         createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+        emailVerified: false,
+        profileComplete: false,
       });
 
       const cometChatUser = new CometChat.User(user.uid); // Using Firebase UID as CometChat UID
