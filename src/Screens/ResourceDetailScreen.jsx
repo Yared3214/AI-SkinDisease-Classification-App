@@ -4,7 +4,7 @@ import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, FlatList, TextInput, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, FlatList, TextInput, Dimensions, ActivityIndicator, Alert, Linking } from 'react-native';
 import RenderHtml from 'react-native-render-html';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import YoutubePlayer from 'react-native-youtube-iframe';
@@ -183,6 +183,13 @@ const ResourceDetailScreen = () => {
       {/* Full Article Content */}
       <RenderHtml contentWidth={width} source={{ html: resource.description }} />
 
+      {/* PDF Display Section */}
+      <Text style={styles.label}>Article Document:</Text>
+              <TouchableOpacity onPress={() => Linking.openURL(resource.document)}>
+                <Text style={[styles.value, { color: '#007bff', textDecorationLine: 'underline' }]}>
+                  View Article Content
+                </Text>
+              </TouchableOpacity>
       {/* Comments Section */}
       <Text style={styles.commentHeader}>Comments:</Text>
       {loading ? <ActivityIndicator style={styles.loader} />
@@ -247,10 +254,18 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: 200, borderRadius: 8, marginBottom: 15 },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 5 },
   type: { fontSize: 16, color: 'gray', marginBottom: 3 },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#555', marginTop: 10 },
+  value: { fontSize: 16, color: '#333' },
   author: { fontSize: 14, color: '#666', marginBottom: 10 },
 
   statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   statItem: { flexDirection: 'row', alignItems: 'center', marginRight: 15 },
+
+  pdf: {
+        flex:1,
+        width:Dimensions.get('window').width,
+        height:Dimensions.get('window').height,
+    },
 
   commentHeader: { fontSize: 18, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
   commentContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },

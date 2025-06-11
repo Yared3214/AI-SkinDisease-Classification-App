@@ -8,29 +8,37 @@ import { CometChat } from '@cometchat/chat-sdk-react-native';
 
 const SignupScreen = () => {
   const navigation = useNavigation();
+
+  // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // UI state
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Form validation
   const validateForm = () => {
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
       setError('All fields are required');
       return false;
     }
 
+    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
       return false;
     }
 
+    // Password length check
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
       return false;
     }
 
+    // Confirm password match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return false;
@@ -39,6 +47,7 @@ const SignupScreen = () => {
     return true;
   };
 
+  // Handle sign up process
   const signUp = async () => {
     setError('');
 
@@ -47,15 +56,13 @@ const SignupScreen = () => {
     setLoading(true);
 
     try {
-      // 1. Create auth user
+      // 1. Register user with Firebase Authentication
       const { user } = await auth().createUserWithEmailAndPassword(email, password);
 
-      // 2. Update user profile
-      await user.updateProfile({
-        displayName: name,
-      });
+      // 2. Update user profile with display name
+      await user.updateProfile({ displayName: name });
 
-      // 3. Save additional user data to Firestore
+      // 3. Store user data in Firestore
       await firestore()
         .collection('users')
         .doc(user.uid)
@@ -70,35 +77,29 @@ const SignupScreen = () => {
           profileComplete: false,
         });
 
-      // 4. Create CometChat user
-    const cometChatUser = new CometChat.User(user.uid); // Using Firebase UID as CometChat UID
-    cometChatUser.setName(name.trim());
+      // 4. Create user on CometChat platform using Firebase UID
+      const cometChatUser = new CometChat.User(user.uid);
+      cometChatUser.setName(name.trim());
+      cometChatUser.setMetadata({
+        email: email.trim().toLowerCase(),
+        firebase_uid: user.uid,
+      });
 
-    // Add additional CometChat user attributes if needed
-    cometChatUser.setMetadata({
-      email: email.trim().toLowerCase(),
-      firebase_uid: user.uid,
-    });
+      const authKey = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // Use your actual CometChat auth key
+      await CometChat.createUser(cometChatUser, authKey);
 
-    const authKey = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // Replace with your actual auth key
+      console.log('CometChat user created successfully');
 
-    await CometChat.createUser(cometChatUser, authKey);
-    console.log('CometChat user created successfully');
-
-
+      // Notify user of successful signup
       Alert.alert(
         'Success',
         'Account created! Please check your email to verify your account.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.replace('login'),
-          },
-        ]
+        [{ text: 'OK', onPress: () => navigation.replace('login') }]
       );
     } catch (error) {
       console.error('Signup error:', error);
-      
+
+      // Handle common Firebase auth errors
       let errorMessage = 'Signup failed. Please try again.';
       switch (error.code) {
         case 'auth/email-already-in-use':
@@ -114,23 +115,22 @@ const SignupScreen = () => {
           errorMessage = 'Network error. Please check your connection';
           break;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <View style={styles.container}>
-      {/* User Signup Title */}
+      {/* Screen title */}
       <Text style={styles.title}>
-        <FontAwesome name="user-plus" size={18} color="#4F4F4F" />{''}
+        <FontAwesome name="user-plus" size={18} color="#4F4F4F" />{' '}
         <Text style={styles.titleText}>Create Account</Text>
       </Text>
 
-      {/* Input Fields */}
+      {/* Input fields */}
       <TextInput
         style={styles.input}
         placeholder="Full Name"
@@ -144,6 +144,8 @@ const SignupScreen = () => {
         placeholderTextColor="#A9A9A9"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
@@ -162,12 +164,11 @@ const SignupScreen = () => {
         onChangeText={setConfirmPassword}
       />
 
-      {/* Error Message */}
+      {/* Display error message */}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {/* Signup Button */}
-      <TouchableOpacity style={styles.signupButton}
-      onPress={signUp}>
+      {/* Signup button */}
+      <TouchableOpacity style={styles.signupButton} onPress={signUp}>
         {loading ? (
           <ActivityIndicator size="small" color="#FFF" />
         ) : (
@@ -175,7 +176,7 @@ const SignupScreen = () => {
         )}
       </TouchableOpacity>
 
-      {/* Already have an account? */}
+      {/* Link to login */}
       <View style={styles.linkContainer}>
         <Text style={styles.linkText}>Already have an account?</Text>
         <TouchableOpacity onPress={() => navigation.navigate('login')}>
@@ -183,7 +184,7 @@ const SignupScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Social Signup */}
+      {/* Social signup section (UI only for now) */}
       <Text style={styles.socialText}>Sign up with Social Media</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity style={styles.socialButton}>
@@ -199,6 +200,7 @@ const SignupScreen = () => {
 
 export default SignupScreen;
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

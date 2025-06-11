@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform, PermissionsAndroid } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
@@ -7,46 +17,57 @@ import { CometChatUIKit, UIKitSettings } from '@cometchat/chat-uikit-react-nativ
 import { CometChat } from '@cometchat/chat-sdk-react-native';
 
 /* -------------------------------------------------------------------------- */
-/*  ⚙️  Replace the placeholders below with your own CometChat credentials.    */
+/* 💬 CometChat Configuration                                                */
 /* -------------------------------------------------------------------------- */
-const APP_ID = '2749852004e6e162'; // e.g. "123456abc"
-const AUTH_KEY = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // e.g. "0b1c2d3e4f5g6h7i8j9k"
-const REGION = 'in'; // e.g. "us" | "eu" | "in"
-/* -------------------------------------------------------------------------- */
+const APP_ID = '2749852004e6e162';
+const AUTH_KEY = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3';
+const REGION = 'in';
 
 const LoginScreen = () => {
-  const navigation = useNavigation();
+  // 🔧 Local state for email, password, and loading spinner
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
+  /**
+   * 📥 Sign in handler
+   * Authenticates user using Firebase and logs them into CometChat
+   */
   const signIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
+      // 1️⃣ Sign in with Firebase
       const response = await auth().signInWithEmailAndPassword(email, password);
-      const uid = response.user.uid; // Get the Firebase UID
+      const uid = response.user.uid;
+
+      // 2️⃣ Initialize CometChat UIKit
       const uiKitSettings = {
-              appId: APP_ID,
-              authKey: AUTH_KEY,
-              region: REGION,
-              subscriptionType: CometChat.AppSettings
-                .SUBSCRIPTION_TYPE_ALL_USERS,
-            };
+        appId: APP_ID,
+        authKey: AUTH_KEY,
+        region: REGION,
+        subscriptionType: CometChat.AppSettings.SUBSCRIPTION_TYPE_ALL_USERS,
+      };
 
-            try {
-              await CometChatUIKit.init(uiKitSettings);
-              console.log('[CometChatUIKit] initialized');
+      try {
+        await CometChatUIKit.init(uiKitSettings);
+        console.log('[CometChatUIKit] initialized');
 
-              // 2️⃣  Android runtime permissions (camera, mic, etc.).
-              await requestPermissions();
+        // 3️⃣ Request permissions for Android devices
+        await requestPermissions();
 
-              // 3️⃣  Login.
-              console.log(uid)
-              await CometChatUIKit.login({uid: uid});
-              Alert.alert('Success', 'Logged in as user: Unknown');
-            } catch (err) {
-              console.error('[CometChatUIKit] init/login error', err);
-            }
+        // 4️⃣ Log user into CometChat using Firebase UID
+        console.log(uid);
+        await CometChatUIKit.login({ uid });
+      } catch (err) {
+        console.error('[CometChatUIKit] init/login error', err);
+      }
     } catch (error) {
       console.error('Sign in error:', error);
       Alert.alert('Sign in failed: ' + error.message);
@@ -55,41 +76,41 @@ const LoginScreen = () => {
     }
   };
 
-  /* ------------------------------------------------------------------ */
-        /* Helper: request common Android permissions                          */
-        /* ------------------------------------------------------------------ */
-        const requestPermissions = async () => {
-          if (Platform.OS !== 'android') return;
-          try {
-            const granted = await PermissionsAndroid.requestMultiple([
-              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-              PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-              PermissionsAndroid.PERMISSIONS.CAMERA,
-              PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-              PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-            ]);
+  /**
+   * 📱 Requests runtime permissions on Android (e.g. camera, audio, notifications)
+   */
+  const requestPermissions = async () => {
+    if (Platform.OS !== 'android') return;
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      ]);
 
-            const allGranted = Object.values(granted).every(
-              status => status === PermissionsAndroid.RESULTS.GRANTED,
-            );
+      const allGranted = Object.values(granted).every(
+        status => status === PermissionsAndroid.RESULTS.GRANTED
+      );
 
-            if (!allGranted) {
-              console.warn('[Permissions] Not all permissions granted');
-            }
-          } catch (err) {
-            console.warn('[Permissions] Error requesting Android permissions', err);
-          }
-        };
+      if (!allGranted) {
+        console.warn('[Permissions] Not all permissions granted');
+      }
+    } catch (err) {
+      console.warn('[Permissions] Error requesting Android permissions', err);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* User Login Title */}
+      {/* 👤 Title */}
       <Text style={styles.title}>
-        <FontAwesome name="user" size={18} color="#4F4F4F" />{''}
+        <FontAwesome name="user" size={18} color="#4F4F4F" />{' '}
         <Text style={styles.titleText}>User Login</Text>
       </Text>
 
-      {/* Input Fields */}
+      {/* 📧 Email Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter your email"
@@ -97,6 +118,8 @@ const LoginScreen = () => {
         value={email}
         onChangeText={setEmail}
       />
+
+      {/* 🔒 Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter your password"
@@ -106,7 +129,7 @@ const LoginScreen = () => {
         onChangeText={setPassword}
       />
 
-      {/* Forgot Password & Create Account */}
+      {/* 🔗 Forgot Password and Create Account Links */}
       <View style={styles.linkContainer}>
         <TouchableOpacity onPress={() => navigation.navigate('forgot-pass')}>
           <Text style={styles.link}>Forgot Password?</Text>
@@ -116,14 +139,16 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton}
-      onPress={signIn}>
-        {loading ? <ActivityIndicator size="small" color="#FFF" />
-      : <Text style={styles.loginButtonText}>Login</Text>}
+      {/* 🔓 Login Button */}
+      <TouchableOpacity style={styles.loginButton} onPress={signIn}>
+        {loading ? (
+          <ActivityIndicator size="small" color="#FFF" />
+        ) : (
+          <Text style={styles.loginButtonText}>Login</Text>
+        )}
       </TouchableOpacity>
 
-      {/* Social Login */}
+      {/* 🌐 Social Media Login Options */}
       <Text style={styles.socialText}>Login with Social Media</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity style={styles.socialButton}>
@@ -139,6 +164,9 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
+/* -------------------------------------------------------------------------- */
+/* 🎨 Styles                                                                 */
+/* -------------------------------------------------------------------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

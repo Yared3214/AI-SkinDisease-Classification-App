@@ -14,11 +14,13 @@ import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { isBefore, format, startOfDay } from 'date-fns';
 
-
+// Main screen component for selecting and booking a time slot with an expert
 const TimeSlotScreen = ({ route }) => {
-  const { expertId, expertName } = route.params;
+  const { expertId, expertName } = route.params; // Props from previous screen
   const navigation = useNavigation();
   const currentUser = auth().currentUser;
+
+  // State variables
   const [availability, setAvailability] = useState({});
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -29,23 +31,24 @@ const TimeSlotScreen = ({ route }) => {
   const [hasPendingAppointment, setHasPendingAppointment] = useState(false);
   const [userName, setUserName] = useState('');
 
+  // Fetch user name on component mount
   useEffect(() => {
-    const fetchData = async() => {
+    const fetchData = async () => {
       if (!currentUser) return;
 
-    const userDoc = await firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-          if (userDoc.exists) {
-            setUserName(userDoc.data().name);
-          }
-    }
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+
+      if (userDoc.exists) {
+        setUserName(userDoc.data().name);
+      }
+    };
     fetchData();
-  })
+  }, []);
 
-
-  // Real-time availability listener
+  // Fetch expert availability in real-time
   useEffect(() => {
     if (!expertId) return;
 
@@ -55,6 +58,7 @@ const TimeSlotScreen = ({ route }) => {
       .onSnapshot(async (snapshot) => {
         try {
           setAvailabilityLoading(true);
+
           if (!snapshot.empty) {
             const expertData = snapshot.docs[0].data();
             const availabilityId = expertData.availabilityId;
@@ -79,7 +83,7 @@ const TimeSlotScreen = ({ route }) => {
     return () => unsubscribe();
   }, [expertId]);
 
-  // Check for pending appointments
+  // Check if user has a pending appointment in real-time
   useEffect(() => {
     if (!currentUser?.uid) return;
 
@@ -94,15 +98,17 @@ const TimeSlotScreen = ({ route }) => {
     return () => unsubscribe();
   }, [currentUser?.uid]);
 
+  // Capitalize a string
   const capitalize = (str) => {
     if (typeof str !== 'string') return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-
+  // Show/hide date picker modal
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
+  // Handle date selection and validation
   const handleDateConfirm = (date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     if (dayName !== selectedDay) {
@@ -113,20 +119,18 @@ const TimeSlotScreen = ({ route }) => {
     hideDatePicker();
   };
 
+  // Generate random meeting ID
   const generateMeetingId = () => {
-    // You can make this more complex if needed
     return Math.random().toString(36).substring(2, 10).toUpperCase();
   };
 
-
+  // Handle appointment booking logic
   const handleBooking = async () => {
-    // 1. Validate all required fields
     if (!selectedDay || !selectedSlot || !selectedDate) {
       Alert.alert('Missing Information', 'Please select a day, date, and time slot');
       return;
     }
 
-    // 2. Check if date is in the past
     const today = startOfDay(new Date());
     const selectedDayStart = startOfDay(selectedDate);
 
@@ -138,7 +142,6 @@ const TimeSlotScreen = ({ route }) => {
       return;
     }
 
-    // 3. Check if user has pending appointments
     if (hasPendingAppointment) {
       Alert.alert(
         'Pending Appointment',
@@ -147,8 +150,7 @@ const TimeSlotScreen = ({ route }) => {
       return;
     }
 
-    // 4. Format date and prepare confirmation message
-    const formattedDate = format(selectedDate, 'EEEE, MMMM do yyyy'); // "Monday, January 1st 2023"
+    const formattedDate = format(selectedDate, 'EEEE, MMMM do yyyy');
 
     Alert.alert(
       'Confirm Booking',
@@ -160,8 +162,9 @@ const TimeSlotScreen = ({ route }) => {
           onPress: async () => {
             setLoading(true);
             try {
-              // 5. Check slot availability
-              const formattedDBDate = format(selectedDate, 'yyyy-MM-dd'); // "2023-01-01"
+              const formattedDBDate = format(selectedDate, 'yyyy-MM-dd');
+
+              // Check if slot already booked
               const slotQuery = await firestore()
                 .collection('appointments')
                 .where('expertId', '==', expertId)
@@ -174,14 +177,14 @@ const TimeSlotScreen = ({ route }) => {
                 return;
               }
 
-              // 6. Create appointment
+              // Prepare appointment data
               const appointmentData = {
                 userId: currentUser.uid,
                 userName: userName || 'User',
                 expertId,
                 expertName,
                 date: formattedDBDate,
-                displayDate: formattedDate, // For easier reading later
+                displayDate: formattedDate,
                 time: selectedSlot,
                 day: selectedDay,
                 status: 'pending',
@@ -189,7 +192,10 @@ const TimeSlotScreen = ({ route }) => {
                 createdAt: firestore.FieldValue.serverTimestamp(),
                 updatedAt: firestore.FieldValue.serverTimestamp(),
               };
+
+              // Create appointment in Firestore
               await firestore().collection('appointments').add(appointmentData);
+
               Alert.alert(
                 'Success',
                 `Appointment booked for ${formattedDate} at ${selectedSlot}`,
@@ -210,71 +216,85 @@ const TimeSlotScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Select Day:</Text>
-      {availabilityLoading ? <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+
+      {/* Show loading spinner while availability is being fetched */}
+      {availabilityLoading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#006666" />
-        </View> :       <FlatList
-        vertical
-        data={Object.keys(availability || {})}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.option, selectedDay === item && styles.selected]}
-            onPress={() => {
-              setSelectedDay(item);
-              setSelectedSlot(null);
-              setSelectedDate(null);
-            }}
-          >
-            <Text>{capitalize(item)}</Text>
-          </TouchableOpacity>
-        )}
-      />}
+        </View>
+      ) : (
+        <FlatList
+          vertical
+          data={Object.keys(availability || {})}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.option, selectedDay === item && styles.selected]}
+              onPress={() => {
+                setSelectedDay(item);
+                setSelectedSlot(null);
+                setSelectedDate(null);
+              }}
+            >
+              <Text>{capitalize(item)}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
-
+      {/* If day is selected, show time slots and date picker */}
       {selectedDay && (
         <>
           {availability[selectedDay] && availability[selectedDay].length > 0 ? (
             <>
-            <Text style={styles.header}>Select Time Slot:</Text>
-            <FlatList
-            horizontal
-            data={Array.isArray(availability[selectedDay]) ? availability[selectedDay] : []}
-            keyExtractor={(slot) => slot}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.option, selectedSlot === item && styles.selected]}
-                onPress={() => setSelectedSlot(item)}
-              >
-                <Text>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
+              <Text style={styles.header}>Select Time Slot:</Text>
+              <FlatList
+                horizontal
+                data={Array.isArray(availability[selectedDay]) ? availability[selectedDay] : []}
+                keyExtractor={(slot) => slot}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.option, selectedSlot === item && styles.selected]}
+                    onPress={() => setSelectedSlot(item)}
+                  >
+                    <Text>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
 
-          <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-            <Text>{selectedDate ? selectedDate.toDateString() : 'Select Date'}</Text>
-          </TouchableOpacity>
-          <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            onConfirm={handleDateConfirm}
-            onCancel={hideDatePicker}
-          /> 
-          </> )
-           : (
+              {/* Date picker button */}
+              <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
+                <Text>{selectedDate ? selectedDate.toDateString() : 'Select Date'}</Text>
+              </TouchableOpacity>
+
+              <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                onConfirm={handleDateConfirm}
+                onCancel={hideDatePicker}
+              />
+            </>
+          ) : (
             <Text style={{ marginTop: 10, fontStyle: 'italic', color: 'gray' }}>
               Not available on {capitalize(selectedDay)}
-          </Text>
-          )
-          }
-        </> )}
+            </Text>
+          )}
+        </>
+      )}
 
+      {/* Confirm Booking Button */}
       <TouchableOpacity style={styles.confirmButton} onPress={handleBooking}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: 'white' }}>Confirm Booking</Text>}
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={{ color: 'white' }}>Confirm Booking</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
