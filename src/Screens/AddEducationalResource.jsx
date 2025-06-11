@@ -5,7 +5,10 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
 import axios from 'axios';
-
+import DocumentPicker from 'react-native-document-picker';
+import { supabase } from '../supabaseClient';
+import RNBlobUtil from 'react-native-blob-util';
+import { Buffer } from 'buffer';
 
 const CLOUD_NAME = 'dfnzk8ip2';
 const UPLOAD_PRESET = 'educational_resources';
@@ -19,6 +22,7 @@ const AddEducationalResource = ({ navigation }) => {
   const [resourceType, setResourceType] = useState('article');
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [document, setDocument] = useState(null);
 
   // Fetch current user's name
   useEffect(() => {
@@ -63,6 +67,26 @@ const AddEducationalResource = ({ navigation }) => {
     });
   };
 
+  const pickDocument = async () => {
+  try {
+    const result = await DocumentPicker.pickSingle({
+      type: [DocumentPicker.types.pdf], // Or allFiles
+    });
+
+    if (result?.uri) {
+      setDocument(result);
+      console.log("Selected document:", result);
+    }
+  } catch (error) {
+    if (DocumentPicker.isCancel(error)) {
+      console.log("User canceled document picker");
+    } else {
+      console.error("Error picking document:", error);
+      Alert.alert("Something went wrong.");
+    }
+  }
+};
+
   // Upload Image to Cloudinary
   const uploadImageToCloudinary = async (imageUri) => {
     try {
@@ -82,6 +106,35 @@ const AddEducationalResource = ({ navigation }) => {
       console.error('Cloudinary Upload Error:', error);
       return null;
     }
+  };
+
+  const uploadToSupabase = async (file) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `documents/${fileName}`;
+  
+    // Read file as base64 from content:// URI
+    const base64Data = await RNBlobUtil.fs.readFile(file.uri, 'base64');
+  
+    const fileBuffer = Buffer.from(base64Data, 'base64');
+  
+    const { data, error } = await supabase.storage
+      .from('educational-resource')
+      .upload(filePath, fileBuffer, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: false,
+      });
+  
+    if (error) {
+      console.error("Supabase upload error:", error);
+      throw new Error("File upload failed");
+    }
+  
+    const { data: publicUrlData } = supabase.storage
+      .from('educational-resource')
+      .getPublicUrl(filePath);
+  
+    return publicUrlData.publicUrl;
   };
 
   const handleSubmit = async () => {
@@ -107,13 +160,15 @@ const AddEducationalResource = ({ navigation }) => {
           if (!imageUrl) {
             throw new Error('Image upload failed.');
           }
+          const fileUrl = await uploadToSupabase(document);
         }
         await firestore().collection('resources').add({
           title,
           description,
           type: resourceType,
-          image,
+          image:image && resourceType !== 'video' ? await uploadImageToCloudinary(image) : null, // Upload image if provided
           videoUrl: resourceType === 'video' ? videoUrl : null,
+          document: resourceType !== 'video' ?  await uploadToSupabase(document) : null, // Upload document if provided
           author,
           likes: [],
           commentCount: 0,
@@ -139,8 +194,6 @@ const AddEducationalResource = ({ navigation }) => {
       <Text style={styles.label}>Description</Text>
       <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} placeholder="Enter description" multiline />
 
-      {/* <Text style={styles.label}>Category</Text>
-      <TextInput style={styles.input} value={type} onChangeText={setType} placeholder='Enter category' /> */}
 
       <Text style={styles.label}>Resource Type</Text>
       <View style={styles.pickerContainer}>
@@ -155,6 +208,9 @@ const AddEducationalResource = ({ navigation }) => {
         <>
           <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
             {image ? <Image source={{ uri: image }} style={styles.imagePreview} /> : <Text>Pick an Image</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
+                  <Text style={styles.uploadButtonText}>{document ? 'Document Uploaded' : 'Upload Certification (PDF)'}</Text>
           </TouchableOpacity>
         </>
       )}
@@ -180,6 +236,8 @@ const styles = StyleSheet.create({
   textArea: { height: 100 },
   imagePicker: { backgroundColor: '#f0f0f0', padding: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10, borderRadius: 8 },
   imagePreview: { width: 100, height: 100, borderRadius: 8 },
+  uploadButton: { width: '100%', backgroundColor: '#FFF', paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginTop: 10, borderWidth: 1, borderColor: '#6BA292' },
+  uploadButtonText: { color: '#6BA292', fontSize: 16 },
   button: { backgroundColor: '#006666', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 20 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   pickerContainer: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, backgroundColor: '#f9f9f9', marginTop: 10, paddingHorizontal: 10, justifyContent: 'center'},
