@@ -108,7 +108,7 @@ const SkinImageUploadScreen = () => {
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 20000, // Timeout after 10 seconds
+          timeout: 60000, // Timeout after 10 seconds
         }
       );
 

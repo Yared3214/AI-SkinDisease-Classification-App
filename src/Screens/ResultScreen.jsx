@@ -12,6 +12,45 @@ const DISEASE_CLASSES = [
   "Vascular lesions (vasc)",
 ];
 
+const RECOMMENDED_ACTIONS = {
+  "Actinic keratoses (akiec)": [
+    "Visit a dermatologist for evaluation",
+    "Use SPF 30+ sunscreen daily",
+    "Consider cryotherapy or topical treatments"
+  ],
+  "Basal cell carcinoma (bcc)": [
+    "Seek immediate dermatological care",
+    "Surgical removal may be required",
+    "Avoid further sun exposure"
+  ],
+  "Benign keratosis-like lesions (bkl)": [
+    "Usually harmless; monitor for changes",
+    "Consult a dermatologist if unsure",
+    "Can be removed for cosmetic reasons"
+  ],
+  "Dermatofibroma (df)": [
+    "Generally no treatment needed",
+    "See a doctor if painful or growing",
+    "Surgical removal if bothersome"
+  ],
+  "Melanocytic Nevi (nv)": [
+    "Monitor for changes using the ABCDE rule",
+    "Have yearly skin checks",
+    "Biopsy if any suspicious change occurs"
+  ],
+  "Melanoma (mel)": [
+    "Urgent referral to a dermatologist",
+    "Surgical removal and further tests",
+    "Early diagnosis is critical"
+  ],
+  "Vascular lesions (vasc)": [
+    "Often harmless; monitor size and color",
+    "Laser treatment available for removal",
+    "See a specialist if bleeding or painful"
+  ]
+};
+
+
 const ImageAnalysisResultsScreen = () => {
   const route = useRoute();
   const { imageUri, result } = route.params || {};
@@ -62,9 +101,9 @@ const ImageAnalysisResultsScreen = () => {
 
       <View style={styles.resultBox}>
         <Text style={styles.subTitle}>Recommended Actions</Text>
-        <Text style={styles.listItem}>• Consult a dermatologist</Text>
-        <Text style={styles.listItem}>• Avoid self-medication</Text>
-        <Text style={styles.listItem}>• Monitor the lesion for changes</Text>
+        {(RECOMMENDED_ACTIONS[mainCondition?.label] || []).map((action, idx) => (
+    <Text key={idx} style={styles.listItem}>• {action}</Text>
+  ))}
 
         <Text style={styles.subTitle}>Helpful Resources</Text>
         <TouchableOpacity>
