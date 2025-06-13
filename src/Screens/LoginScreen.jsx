@@ -35,6 +35,9 @@ const LoginScreen = () => {
    * Authenticates user using Firebase and logs them into CometChat
    */
   const signIn = async () => {
+    // Forbid double submissions
+    if (loading) return;
+
     if (!email || !password) {
       Alert.alert('Error', 'Email and password are required.');
       setLoading(false);
@@ -57,20 +60,25 @@ const LoginScreen = () => {
 
       try {
         await CometChatUIKit.init(uiKitSettings);
-        console.log('[CometChatUIKit] initialized');
-
         // 3️⃣ Request permissions for Android devices
         await requestPermissions();
-
         // 4️⃣ Log user into CometChat using Firebase UID
-        console.log(uid);
         await CometChatUIKit.login({ uid });
       } catch (err) {
         console.error('[CometChatUIKit] init/login error', err);
       }
     } catch (error) {
-      console.error('Sign in error:', error);
-      Alert.alert('Sign in failed: ' + error.message);
+      // Network error handling
+      if (error.code === 'auth/network-request-failed') {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else if (
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password'
+      ) {
+        Alert.alert('Sign in failed', 'Incorrect email or password.');
+      } else {
+        Alert.alert('Sign in failed', error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -117,6 +125,10 @@ const LoginScreen = () => {
         placeholderTextColor="#A9A9A9"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        textContentType="emailAddress"
       />
 
       {/* 🔒 Password Input */}
@@ -127,6 +139,8 @@ const LoginScreen = () => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        autoCapitalize="none"
+        textContentType="password"
       />
 
       {/* 🔗 Forgot Password and Create Account Links */}
@@ -140,7 +154,12 @@ const LoginScreen = () => {
       </View>
 
       {/* 🔓 Login Button */}
-      <TouchableOpacity style={styles.loginButton} onPress={signIn}>
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={signIn}
+        disabled={loading}
+        testID="loginButton"
+      >
         {loading ? (
           <ActivityIndicator size="small" color="#FFF" />
         ) : (

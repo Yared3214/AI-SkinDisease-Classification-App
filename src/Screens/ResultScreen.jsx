@@ -1,6 +1,9 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+
 
 const DISEASE_CLASSES = [
   "Actinic keratoses (akiec)",
@@ -50,10 +53,51 @@ const RECOMMENDED_ACTIONS = {
   ]
 };
 
+const DISEASE_SYMPTOMS = {
+  "Actinic keratoses (akiec)": [
+    "Rough, scaly patches on sun-exposed skin",
+    "Pink, red, or brown spots",
+    "May feel tender or itchy"
+  ],
+  "Basal cell carcinoma (bcc)": [
+    "Pearly or waxy bump",
+    "Flat, flesh-colored or brown scar-like lesion",
+    "Bleeding or scabbing sore that heals and returns"
+  ],
+  "Benign keratosis-like lesions (bkl)": [
+    "Wart-like, waxy, or stuck-on appearance",
+    "Color ranges from light tan to black",
+    "Usually painless"
+  ],
+  "Dermatofibroma (df)": [
+    "Firm, small nodule (often brownish)",
+    "Usually less than 1 cm in diameter",
+    "Dimple when pinched"
+  ],
+  "Melanocytic Nevi (nv)": [
+    "Well-defined, round or oval moles",
+    "Usually brown or black",
+    "Flat or slightly raised"
+  ],
+  "Melanoma (mel)": [
+    "New or changing mole",
+    "Irregular borders and multiple colors",
+    "May itch or bleed"
+  ],
+  "Vascular lesions (vasc)": [
+    "Red, purple, or blue patch or bump",
+    "May blanch (turn white) when pressed",
+    "Can be present at birth or develop later"
+  ]
+};
+
 
 const ImageAnalysisResultsScreen = () => {
   const route = useRoute();
   const { imageUri, result } = route.params || {};
+  const [loading, setLoading] = useState(false);
+  const user = auth().currentUser;
+  
 
   const topPredictions = result?.predictions
     ?.map((prob, index) => ({ label: DISEASE_CLASSES[index], prob }))
@@ -62,6 +106,34 @@ const ImageAnalysisResultsScreen = () => {
 
   const mainCondition = topPredictions?.[0];
   const otherConditions = topPredictions?.slice(1);
+
+  
+
+  const saveHistory = async () => {
+      try {
+        setLoading(true)
+        await firestore().collection('history').add({
+          userId: user.uid,
+          imageUri,
+          mainCondition: mainCondition.label,
+          mainConditionConfidence: mainCondition.prob,
+          symptoms: DISEASE_SYMPTOMS[mainCondition.label] || [],
+          otherConditions: otherConditions?.map(cond => ({
+            label: cond.label,
+            prob: cond.prob
+          })),
+          recommendedActions: RECOMMENDED_ACTIONS[mainCondition.label] || [],
+          predictions: result.predictions,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+        Alert.alert("Report Saved")
+      } catch (err) {
+        // Optional: Alert.alert('Error', 'Failed to save analysis to history.');
+        console.error('Failed to save history:', err);
+      } finally {
+        setLoading(false)
+      }
+    };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -83,9 +155,13 @@ const ImageAnalysisResultsScreen = () => {
             Confidence: {(mainCondition.prob * 100).toFixed(2)}%
           </Text>
           <Text style={styles.description}>
-            {/* You can optionally load a description per disease */}
             {mainCondition.label} may require further medical assessment. This prediction is based on AI analysis.
           </Text>
+
+          <Text style={styles.subTitle}>Symptoms</Text>
+          {(DISEASE_SYMPTOMS[mainCondition.label] || []).map((symp, idx) => (
+            <Text key={idx} style={styles.listItem}>• {symp}</Text>
+          ))}
 
           <Text style={styles.subTitle}>Additional Insights</Text>
           {otherConditions?.map((item, idx) => (
@@ -102,8 +178,8 @@ const ImageAnalysisResultsScreen = () => {
       <View style={styles.resultBox}>
         <Text style={styles.subTitle}>Recommended Actions</Text>
         {(RECOMMENDED_ACTIONS[mainCondition?.label] || []).map((action, idx) => (
-    <Text key={idx} style={styles.listItem}>• {action}</Text>
-  ))}
+          <Text key={idx} style={styles.listItem}>• {action}</Text>
+        ))}
 
         <Text style={styles.subTitle}>Helpful Resources</Text>
         <TouchableOpacity>
@@ -115,8 +191,8 @@ const ImageAnalysisResultsScreen = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.buttonText}>Save Report</Text>
+        <TouchableOpacity style={styles.saveButton} onPress={saveHistory}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save Report</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={styles.scheduleButton}>
           <Text style={styles.scheduleButtonText}>Schedule Consultation</Text>

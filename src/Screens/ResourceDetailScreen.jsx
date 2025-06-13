@@ -1,6 +1,6 @@
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../FireBaseConfig/FirebaseConfig';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import React, { useEffect, useState } from 'react';
@@ -8,9 +8,11 @@ import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, FlatList, 
 import RenderHtml from 'react-native-render-html';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
 const ResourceDetailScreen = () => {
+  const navigation = useNavigation();
   const route = useRoute();
   const { resource } = route.params;
   const [likes, setLikes] = useState(resource.likes);
@@ -18,6 +20,7 @@ const ResourceDetailScreen = () => {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
+  const [loading_, setLoading_] = useState(false);
   const user_ = auth().currentUser;
   const resourceRef = firestore().collection('resources').doc(resource.id);
   const width = Dimensions.get('window').width;
@@ -36,6 +39,38 @@ const ResourceDetailScreen = () => {
 
     return unsubscribe;
   }, [resource.id, user_, resourceRef]);
+
+  const handleDelete = async () => {
+    Alert.alert(
+      'Delete Resource',
+      'Are you sure you want to delete this resource?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading_(true);
+              await firestore().collection('resources').doc(resource.id).delete();
+              Alert.alert('Success', 'Resource deleted successfully');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete resource');
+              setLoading_(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // Only allow delete if logged-in expert is the author
+  const canDelete =
+    user_ &&
+    resource.authorId &&
+    user_.uid === resource.authorId;
 
 
   // Fetch comments with user data
@@ -155,6 +190,22 @@ const ResourceDetailScreen = () => {
     return match ? match[1] : null;
   };
 
+  if (loading_) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (!resource) {
+    return (
+      <View style={styles.centered}>
+        <Text>Resource not found.</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
 {resource.type === 'video' && resource.videoUrl ? (
@@ -184,12 +235,15 @@ const ResourceDetailScreen = () => {
       <RenderHtml contentWidth={width} source={{ html: resource.description }} />
 
       {/* PDF Display Section */}
-      <Text style={styles.label}>Article Document:</Text>
+      { resource.document !== null &&
+      <>
+        <Text style={styles.label}>Article Document:</Text>
               <TouchableOpacity onPress={() => Linking.openURL(resource.document)}>
                 <Text style={[styles.value, { color: '#007bff', textDecorationLine: 'underline' }]}>
                   View Article Content
                 </Text>
               </TouchableOpacity>
+              </>}
       {/* Comments Section */}
       <Text style={styles.commentHeader}>Comments:</Text>
       {loading ? <ActivityIndicator style={styles.loader} />
@@ -242,6 +296,14 @@ const ResourceDetailScreen = () => {
           </TouchableOpacity>
         </View>
       )}
+
+       {/* Show Delete button only if expert is the author */}
+      {canDelete && (
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Icon name="delete" size={22} color="#fff" />
+          <Text style={styles.deleteText}>Delete Resource</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 };
@@ -249,6 +311,7 @@ const ResourceDetailScreen = () => {
 export default ResourceDetailScreen;
 
 const styles = StyleSheet.create({
+  centered: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   loader: {flex: 1, justifyContent: 'center', alignItems: 'center'  },
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   image: { width: '100%', height: 200, borderRadius: 8, marginBottom: 15 },
@@ -278,4 +341,14 @@ const styles = StyleSheet.create({
   sendButton: { backgroundColor: '#006666', padding: 10, borderRadius: 5, marginLeft: 10 },
   content: { fontSize: 16, lineHeight: 24, textAlign: 'justify' },
   markdown: { fontSize: 16, lineHeight: 24 },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E57373',
+    padding: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginTop: 30,
+  },
+  deleteText: { color: '#fff', marginLeft: 8, fontWeight: 'bold', fontSize: 16 },
 });

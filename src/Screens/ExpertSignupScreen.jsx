@@ -15,6 +15,7 @@ const ExpertSignupScreen = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [qualifications, setQualifications] = useState('');
   const [workplace, setWorkplace] = useState('');
@@ -29,6 +30,7 @@ const ExpertSignupScreen = () => {
     if (!name.trim()) return "Full Name is required.";
     if (!emailRegex.test(email)) return "Please enter a valid email address.";
     if (!passwordRegex.test(password)) return "Password must be at least 6 characters, including a letter and a number.";
+    if (password !== confirmPassword) return "Passwords do not match.";
     if (!licenseNumber.trim()) return "Medical License Number is required.";
     if (licenseNumber.length < 5) return "License Number seems too short.";
     if (!qualifications.trim()) return "Qualifications are required.";
@@ -37,67 +39,54 @@ const ExpertSignupScreen = () => {
     return null;
   };
 
-  // const pickDocument = async () => {
-  //   let result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
-  //   if (!result.canceled) {
-  //     setDocument(result.uri);
-  //   }
-  // };
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.pdf], // Or allFiles
+      });
 
-const pickDocument = async () => {
-  try {
-    const result = await DocumentPicker.pickSingle({
-      type: [DocumentPicker.types.pdf], // Or allFiles
-    });
-
-    if (result?.uri) {
-      setDocument(result);
-      console.log("Selected document:", result);
+      if (result?.uri) {
+        setDocument(result);
+        console.log("Selected document:", result);
+      }
+    } catch (error) {
+      if (DocumentPicker.isCancel(error)) {
+        console.log("User canceled document picker");
+      } else {
+        console.error("Error picking document:", error);
+        Alert.alert("Something went wrong.");
+      }
     }
-  } catch (error) {
-    if (DocumentPicker.isCancel(error)) {
-      console.log("User canceled document picker");
-    } else {
-      console.error("Error picking document:", error);
-      Alert.alert("Something went wrong.");
+  };
+
+  const uploadToSupabase = async (file) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `documents/${fileName}`;
+
+    // Read file as base64 from content:// URI
+    const base64Data = await RNBlobUtil.fs.readFile(file.uri, 'base64');
+
+    const fileBuffer = Buffer.from(base64Data, 'base64');
+
+    const { data, error } = await supabase.storage
+      .from('experts-credentials')
+      .upload(filePath, fileBuffer, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Supabase upload error:", error);
+      throw new Error("File upload failed");
     }
-  }
-};
 
+    const { data: publicUrlData } = supabase.storage
+      .from('experts-credentials')
+      .getPublicUrl(filePath);
 
-
-
-const uploadToSupabase = async (file) => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Date.now()}.${fileExt}`;
-  const filePath = `documents/${fileName}`;
-
-  // Read file as base64 from content:// URI
-  const base64Data = await RNBlobUtil.fs.readFile(file.uri, 'base64');
-
-  const fileBuffer = Buffer.from(base64Data, 'base64');
-
-  const { data, error } = await supabase.storage
-    .from('experts-credentials')
-    .upload(filePath, fileBuffer, {
-      contentType: file.type || 'application/octet-stream',
-      upsert: false,
-    });
-
-  if (error) {
-    console.error("Supabase upload error:", error);
-    throw new Error("File upload failed");
-  }
-
-  const { data: publicUrlData } = supabase.storage
-    .from('experts-credentials')
-    .getPublicUrl(filePath);
-
-  return publicUrlData.publicUrl;
-};
-
-
-
+    return publicUrlData.publicUrl;
+  };
 
   const signUpExpert = async () => {
     const validationError = validateInputs();
@@ -112,7 +101,7 @@ const uploadToSupabase = async (file) => {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-       await user.updateProfile({
+      await user.updateProfile({
         displayName: name,
       });
 
@@ -137,17 +126,17 @@ const uploadToSupabase = async (file) => {
       });
 
       const cometChatUser = new CometChat.User(user.uid); // Using Firebase UID as CometChat UID
-          cometChatUser.setName(name.trim());
-          // Add additional CometChat user attributes if needed
-          cometChatUser.setMetadata({
-            email: email.trim().toLowerCase(),
-            firebase_uid: user.uid,
-          });
+      cometChatUser.setName(name.trim());
+      // Add additional CometChat user attributes if needed
+      cometChatUser.setMetadata({
+        email: email.trim().toLowerCase(),
+        firebase_uid: user.uid,
+      });
 
       const authKey = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // Replace with your actual auth key
-      
-          await CometChat.createUser(cometChatUser, authKey);
-          console.log('CometChat user created successfully');
+
+      await CometChat.createUser(cometChatUser, authKey);
+      console.log('CometChat user created successfully');
 
       Alert.alert("Success", "Signup Successful! Your profile will be reviewed.");
       navigation.navigate("login");
@@ -166,16 +155,49 @@ const uploadToSupabase = async (file) => {
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       <TextInput
-      style={styles.input}
-      placeholder="Full Name"
-      placeholderTextColor="#A9A9A9"
-      value={name}
-      onChangeText={setName} />
-      <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#A9A9A9" value={email} onChangeText={setEmail} />
-      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#A9A9A9" secureTextEntry value={password} onChangeText={setPassword} />
-      <TextInput style={styles.input} placeholder="Medical License Number" placeholderTextColor="#A9A9A9" value={licenseNumber} onChangeText={setLicenseNumber} />
-      <TextInput style={styles.input} placeholder="Qualifications (e.g. MD, Dermatology)" placeholderTextColor="#A9A9A9" value={qualifications} onChangeText={setQualifications} />
-      <TextInput style={styles.input} placeholder="Workplace (Hospital/Clinic)" placeholderTextColor="#A9A9A9" value={workplace} onChangeText={setWorkplace} />
+        style={styles.input}
+        placeholder="Full Name"
+        placeholderTextColor="#A9A9A9"
+        value={name}
+        onChangeText={setName} />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#A9A9A9"
+        value={email}
+        onChangeText={setEmail} />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#A9A9A9"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword} />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        placeholderTextColor="#A9A9A9"
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword} />
+      <TextInput
+        style={styles.input}
+        placeholder="Medical License Number"
+        placeholderTextColor="#A9A9A9"
+        value={licenseNumber}
+        onChangeText={setLicenseNumber} />
+      <TextInput
+        style={styles.input}
+        placeholder="Qualifications (e.g. MD, Dermatology)"
+        placeholderTextColor="#A9A9A9"
+        value={qualifications}
+        onChangeText={setQualifications} />
+      <TextInput
+        style={styles.input}
+        placeholder="Workplace (Hospital/Clinic)"
+        placeholderTextColor="#A9A9A9"
+        value={workplace}
+        onChangeText={setWorkplace} />
       <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
         <Text style={styles.uploadButtonText}>{document ? 'Document Uploaded' : 'Upload Certification (PDF)'}</Text>
       </TouchableOpacity>
@@ -200,7 +222,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center', padding: 20 },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#4F4F4F' },
   errorText: { color: 'red', marginBottom: 10 },
-  input: { width: '100%', height: 50, backgroundColor: '#FFF', borderRadius: 25, paddingLeft: 15, marginBottom: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
+  input: { width: '100%', height: 50, backgroundColor: '#FFF', color: '#000', borderRadius: 25, paddingLeft: 15, marginBottom: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
   uploadButton: { width: '100%', backgroundColor: '#FFF', paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#6BA292' },
   uploadButtonText: { color: '#6BA292', fontSize: 16 },
   signupButton: { width: '100%', backgroundColor: '#6BA292', paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginBottom: 20 },

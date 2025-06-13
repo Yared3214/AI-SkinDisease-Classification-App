@@ -2,15 +2,18 @@ import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+
 
 import TabNavigation from './TabNavigation';
-import NotificationScreen from '../Screens/NotificationsScreen';
+// import NotificationScreen from '../Screens/HistoryScreen';
 import AvailabilityScreen from '../Screens/AvailabilityScreen';
 import AppointmentStackScreen from './AppointmentStackScreen';
 import MyAppointmentsScreen from '../Screens/MyAppointmentsScreen';
 import ExpertAppointmentsScreen from '../Screens/ExpertAppointmentsScreen';
 import ChatScreen from '../Screens/ChatScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent ';
+import HistoryScreenStackNav from './HistorySceenStackNav';
 
 const Drawer = createDrawerNavigator();
 
@@ -24,8 +27,8 @@ export default function DrawerNavigator({userRole}) {
           if (route.name === 'home-tabs') {
             iconName = 'home';
             return <Entypo name={iconName} size={24} color="black" />;
-          } else if (route.name === 'notifications') {
-            return <AntDesign name="notification" size={24} color="black" />;
+          } else if (route.name === 'history') {
+            return <FontAwesome name="history" size={24} color="black" />;
           } else if (route.name === 'appointment') {
             return <AntDesign name="calendar" size={24} color="black" />
           } else if (route.name === 'available-timeslot') {
@@ -51,9 +54,9 @@ export default function DrawerNavigator({userRole}) {
         component={TabNavigation}
         options={{ title: 'Home' }}
       />
-      <Drawer.Screen name="notifications"
-      component={NotificationScreen}
-      options={{ title: 'Notification'}}
+      <Drawer.Screen name="history"
+      component={HistoryScreenStackNav}
+      options={{ title: 'History'}}
       />
       {userRole === 'user' && (
         <Drawer.Screen name="appointment"

@@ -23,9 +23,9 @@ const AdminHomeScreen = () => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('post-product')}
+        onPress={() => navigation.navigate('product')}
       >
-        <Text style={styles.buttonText}>Add Product</Text>
+        <Text style={styles.buttonText}>Products</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

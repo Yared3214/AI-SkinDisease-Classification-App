@@ -34,6 +34,10 @@ const SkinImageUploadScreen = () => {
           buttonPositive: 'OK',
         }
       );
+      if (granted === PermissionsAndroid.RESULTS.DENIED) {
+        Alert.alert('Permission Denied');
+        return false;
+      }
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
     return true;
@@ -43,13 +47,17 @@ const SkinImageUploadScreen = () => {
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android') {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES, // Use READ_EXTERNAL_STORAGE for Android < 13
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES || PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE, // Fallback for older Android
         {
           title: 'Storage Permission',
           message: 'App needs access to your gallery',
           buttonPositive: 'OK',
         }
       );
+      if (granted === PermissionsAndroid.RESULTS.DENIED) {
+        Alert.alert('Permission Denied');
+        return false;
+      }
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
     return true;
@@ -62,28 +70,40 @@ const SkinImageUploadScreen = () => {
       : await requestStoragePermission();
 
     if (!hasPermission) {
-      Alert.alert('Permission Denied');
+      // Alert already shown in permission functions
       return;
     }
 
-    const result = fromCamera
-      ? await launchCamera({ mediaType: 'photo', quality: 1 })
-      : await launchImageLibrary({ mediaType: 'photo', quality: 1 });
+    try {
+      const result = fromCamera
+        ? await launchCamera({ mediaType: 'photo', quality: 1 })
+        : await launchImageLibrary({ mediaType: 'photo', quality: 1 });
 
-    // Handle response
-    if (result.didCancel) {
-      console.log('User cancelled image picker');
-    } else if (result.errorCode) {
-      console.error('ImagePicker Error:', result.errorMessage);
-      Alert.alert('Error', result.errorMessage);
-    } else {
-      const image = result.assets?.[0];
-      const uri = image?.uri;
-      if (image && uri) {
-        setSelectedImage(image);
-        setUri(uri);
+      // Handle response
+      if (result.didCancel) {
+        // User cancelled, do nothing
+        setSelectedImage(null);
+        setUri(null);
+      } else if (result.errorCode) {
+        console.error('ImagePicker Error:', result.errorMessage);
+        Alert.alert('Error', result.errorMessage);
+      } else {
+        const image = result.assets?.[0];
+        const imageUri = image?.uri;
+        if (image && imageUri) {
+          setSelectedImage(image);
+          setUri(imageUri);
+        }
       }
+    } catch (err) {
+      Alert.alert('Error', 'Could not access camera or gallery.');
     }
+  };
+
+  // Remove selected image
+  const removeImage = () => {
+    setSelectedImage(null);
+    setUri(null);
   };
 
   // Send image to the server for analysis
@@ -108,14 +128,19 @@ const SkinImageUploadScreen = () => {
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 60000, // Timeout after 10 seconds
+          timeout: 60000, // Timeout after 60 seconds
         }
       );
 
-      const data = await response.data;
+      const data = response.data;
 
       // Validate response
-      if (!data['success'] || !data['is_skin_disease']) {
+      if (!data['success'] || typeof data['is_skin_disease'] === 'undefined') {
+        Alert.alert('Invalid Image', 'Please provide a valid skin image.');
+        return;
+      }
+
+      if (!data['is_skin_disease']) {
         Alert.alert('Invalid Image', 'Please provide a valid skin image.');
         return;
       }
@@ -126,8 +151,16 @@ const SkinImageUploadScreen = () => {
         result: data,
       });
     } catch (error) {
-      console.error('Error analyzing image:', error);
-      Alert.alert('Error', 'Unable to process the image');
+      if (
+        error.message &&
+        (error.message.includes('Network Error') ||
+          error.message.includes('timeout') ||
+          error.code === 'ECONNABORTED')
+      ) {
+        Alert.alert('Error', 'Unable to process the image');
+      } else {
+        Alert.alert('Error', 'Unable to process the image');
+      }
     } finally {
       setLoading(false);
     }
@@ -159,7 +192,7 @@ const SkinImageUploadScreen = () => {
       {selectedImage && (
         <View style={styles.imageContainer}>
           <Image source={{ uri: uri }} style={styles.image} />
-          <TouchableOpacity onPress={() => setSelectedImage(null)}>
+          <TouchableOpacity onPress={removeImage}>
             <Text style={styles.removeText}>Remove</Text>
           </TouchableOpacity>
         </View>

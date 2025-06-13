@@ -164,7 +164,7 @@ const TimeSlotScreen = ({ route }) => {
             try {
               const formattedDBDate = format(selectedDate, 'yyyy-MM-dd');
 
-              // Check if slot already booked
+              // Check if slot already booked (ignoring 'rejected' and 'cancelled' appointments)
               const slotQuery = await firestore()
                 .collection('appointments')
                 .where('expertId', '==', expertId)
@@ -172,8 +172,15 @@ const TimeSlotScreen = ({ route }) => {
                 .where('time', '==', selectedSlot)
                 .get();
 
-              if (!slotQuery.empty) {
+              // Only consider appointments that are not 'rejected' or 'cancelled'
+              const validAppointments = slotQuery.docs.filter(doc => {
+                const status = (doc.data().status || '').toLowerCase();
+                return status !== 'rejected' && status !== 'cancelled';
+              });
+
+              if (validAppointments.length > 0) {
                 Alert.alert('Slot Unavailable', 'This time slot is already booked');
+                setLoading(false);
                 return;
               }
 

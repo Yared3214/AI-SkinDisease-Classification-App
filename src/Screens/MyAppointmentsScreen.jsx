@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { format } from 'date-fns'
+import { format } from 'date-fns';
 
 export default function MyAppointmentsScreen() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [cancellingId, setCancellingId] = useState(null);
 
   // Real-time appointments listener with filtering
   useEffect(() => {
@@ -70,6 +71,33 @@ export default function MyAppointmentsScreen() {
     return appointment.status === filter;
   });
 
+  const handleCancelAppointment = async (appointmentId) => {
+    Alert.alert(
+      'Cancel Appointment',
+      'Are you sure you want to cancel this appointment?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            setCancellingId(appointmentId);
+            try {
+              await firestore().collection('appointments').doc(appointmentId).update({
+                status: 'cancelled',
+                updatedAt: firestore.FieldValue.serverTimestamp(),
+              });
+            } catch (error) {
+              Alert.alert('Error', 'Failed to cancel appointment.');
+            } finally {
+              setCancellingId(null);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -80,11 +108,9 @@ export default function MyAppointmentsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>My Appointments</Text> */}
-
       {/* Filters */}
       <View style={styles.filterContainer}>
-        {['all', 'pending', 'accepted', 'completed'].map(status => (
+        {['all', 'pending', 'accepted', 'completed', 'cancelled'].map(status => (
           <TouchableOpacity
             key={status}
             style={[
@@ -112,14 +138,27 @@ export default function MyAppointmentsScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
             <View style={styles.card}>
-    <Text style={styles.expertName}>{item.expertName}</Text>
-    <Text style={styles.dateText}>
-      📅 {item.date ? format(item.date, 'MMMM do, yyyy') : 'No date'} at {item.time}
-    </Text>
-    <Text style={styles.statusText}>
-      Status: {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-    </Text>
-  </View>
+              <Text style={styles.expertName}>{item.expertName}</Text>
+              <Text style={styles.dateText}>
+                📅 {item.date ? format(item.date, 'MMMM do, yyyy') : 'No date'} at {item.time}
+              </Text>
+              <Text style={styles.statusText}>
+                Status: {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              </Text>
+              {item.status === 'pending' && (
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => handleCancelAppointment(item.id)}
+                  disabled={cancellingId === item.id}
+                >
+                  {cancellingId === item.id ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.cancelButtonText}>Cancel Appointment</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         />
       )}
@@ -201,5 +240,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
     color: '#6BA292',
+  },
+  cancelButton: {
+    marginTop: 16,
+    backgroundColor: '#e57373',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });

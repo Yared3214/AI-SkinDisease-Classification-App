@@ -88,8 +88,6 @@ const SignupScreen = () => {
       const authKey = '96e80b8f4460efd9bbf32f14a0068d1bac6920c3'; // Use your actual CometChat auth key
       await CometChat.createUser(cometChatUser, authKey);
 
-      console.log('CometChat user created successfully');
-
       // Notify user of successful signup
       Alert.alert(
         'Success',
@@ -97,8 +95,6 @@ const SignupScreen = () => {
         [{ text: 'OK', onPress: () => navigation.replace('login') }]
       );
     } catch (error) {
-      console.error('Signup error:', error);
-
       // Handle common Firebase auth errors
       let errorMessage = 'Signup failed. Please try again.';
       switch (error.code) {
@@ -109,13 +105,12 @@ const SignupScreen = () => {
           errorMessage = 'Please enter a valid email address';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password should be at least 8 characters';
+          errorMessage = 'Password must be at least 8 characters';
           break;
         case 'auth/network-request-failed':
           errorMessage = 'Network error. Please check your connection';
           break;
       }
-
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -168,7 +163,7 @@ const SignupScreen = () => {
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {/* Signup button */}
-      <TouchableOpacity style={styles.signupButton} onPress={signUp}>
+      <TouchableOpacity style={styles.signupButton} onPress={signUp} disabled={loading}>
         {loading ? (
           <ActivityIndicator size="small" color="#FFF" />
         ) : (
@@ -222,6 +217,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 50,
     backgroundColor: '#FFFFFF',
+    color: '#000',
     borderRadius: 25,
     paddingLeft: 15,
     marginBottom: 15,
