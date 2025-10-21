@@ -123,7 +123,7 @@ const EducationalResources = () => {
         <Feather name="search" size={20} color="black" />
       </View>
       <Text style={styles.subHeader}>
-        Explore dermatologist-approved resources to learn more about skin health.
+        Explore specialist-approved resources to learn more about your general health.
       </Text>
 
       {/* List of Resources */}

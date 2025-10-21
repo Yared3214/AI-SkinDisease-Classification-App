@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from '../Screens/LoginScreen';
-import SignupScreen from '../Screens/SignupScreen';
-import ForgotPasswordScreen from '../Screens/ForgotPasswordScreen';
-import ExpertSignupScreen from '../Screens/ExpertSignupScreen';
+import LoginScreen from '../Screens/LoginScreen/LoginScreen';
+import SignupScreen from '../Screens/SignupScreen/SignupScreen';
+import ForgotPasswordScreen from '../Screens/ForgotPassword/screens/Auth/ForgotPasswordScreen';
+import ExpertSignupScreen from '../Screens/ExpertSignupScreen/ExpertSignupScreen';
 import UserTypeSelectionScreen from '../Screens/UserTypeSelectionScreen';
 
 export default function LoginSignupScreenStackNav() {

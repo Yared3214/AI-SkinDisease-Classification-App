@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import EducationalResourceScreen from '../Screens/EducationalResourceScreen';
+import EducationalResourceScreen from '../Screens/EducationalResources/EducationalResourcesScreen';
 import ResourceDetailScreen from '../Screens/ResourceDetailScreen';
 import AddEdcuationalResource from '../Screens/AddEducationalResource';
 

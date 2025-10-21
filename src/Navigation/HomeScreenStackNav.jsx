@@ -1,12 +1,12 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../Screens/HomeScreen';
+import SkinImageUploadScreen from '../Screens/HomeScreen/screens/SkinAnalysis/SkinImageUploadScreen';
 import ResultScreen from '../Screens/ResultScreen';
 
 export default function HomeScreenStackNav() {
     const Stack = createNativeStackNavigator();
   return (
     <Stack.Navigator>
-      <Stack.Screen name="home" component={HomeScreen} 
+      <Stack.Screen name="home" component={SkinImageUploadScreen} 
       options={{
         headerShown: false
       }}/>
