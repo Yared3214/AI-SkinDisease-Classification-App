@@ -31,8 +31,7 @@ export default function TabNavigation() {
               <Tab.Screen options={{
                 tabBarIcon: ({ color, size }) => (
                   <Ionicons name='person-outline' size={size} color={color} />
-                )
-                
+                ),
               }} name='Profile' component={ProfileScreenStackNav} />
             </Tab.Navigator>
     )}

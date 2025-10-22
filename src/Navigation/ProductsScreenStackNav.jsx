@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProductDetailsScreen from '../Screens/ProductsDetailScreen';
-import ProductsScreen from '../Screens/ProductsScreen';
+import ProductsScreen from '../Screens/ProductsScreen/SkinCareProductsScreen';
 
 export default function ProductsScreenStackNav() {
     const Stack = createNativeStackNavigator();
