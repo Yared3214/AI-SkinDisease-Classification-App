@@ -60,7 +60,7 @@ const handleReject = async () => {
         <Text style={styles.value}>{expert.licenseNumber}</Text>
 
         <Text style={styles.label}>Qualifications:</Text>
-        <Text style={styles.value}>{expert.qualifications}</Text>
+        <Text style={styles.value}>{expert.specialization}</Text>
 
         <Text style={styles.label}>Workplace:</Text>
         <Text style={styles.value}>{expert.workplace}</Text>

@@ -60,4 +60,6 @@ export default StyleSheet.create({
   },
   dropdownItem: { paddingVertical: 10, paddingHorizontal: 15 },
   dropdownItemText: { fontSize: 16, color: '#333' },
+  uploadButton: { width: '100%', backgroundColor: '#FFF', paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#6BA292' },
+  uploadButtonText: { color: '#6BA292', fontSize: 16 },
 });
