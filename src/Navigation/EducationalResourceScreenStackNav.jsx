@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import EducationalResourceScreen from '../Screens/EducationalResources/EducationalResourcesScreen';
 import ResourceDetailScreen from '../Screens/ResourceDetail/ResourceDetailScreen';
-import AddEdcuationalResource from '../Screens/AddEducationalResource';
+import AddEdcuationalResource from '../Screens/AddEducationalResource/AddEducationalResource';
 
 export default function EducationalResourceScreenStackNav() {
     const Stack = createNativeStackNavigator();
