@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import PatientProfileScreen from '../Screens/ProfileScreen';
+import PatientProfileScreen from '../Screens/ProfileScreen/PatientProfileScreen';
 import EditProfileScreen from '../Screens/EditProfileScreen';
 
 export default function ProductsScreenStackNav() {
