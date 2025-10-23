@@ -7,70 +7,68 @@ const categories = ['All', 'Skin', 'Hair', 'General', 'Mental'];
 const CategoryTabs = ({ selectedCategory, setSelectedCategory }) => {
   return (
     <View style={styles.wrapper}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {categories.map((category) => {
-          const isSelected = selectedCategory === category;
-          return (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              style={[
-                styles.categoryPill,
-                isSelected && styles.categorySelected,
-              ]}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  isSelected && styles.categoryTextSelected,
-                ]}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.container}
+          >
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.chip, selectedCategory === cat && styles.chipActive]}
+                onPress={() => setSelectedCategory(cat)}
               >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
+                <Text
+                  style={[
+                    styles.chipText,
+                    selectedCategory === cat && styles.chipTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
   );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginTop: 12,
-    marginBottom: 10,
+    backgroundColor: '#F8FDFB',
+    paddingVertical: 6,
+    borderBottomWidth: 0.3,
+    borderColor: '#D6E6E1',
   },
-  scrollContainer: {
-    paddingHorizontal: 8,
+  container: {
+    paddingHorizontal: 10,
     alignItems: 'center',
   },
-  categoryPill: {
-    paddingVertical: 10,
-    paddingHorizontal: 22,
+  chip: {
+    backgroundColor: '#fff',
     borderRadius: 20,
-    backgroundColor: '#E4F1EE',
-    marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#6BA292',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 36, // ✅ keeps consistent height
   },
-  categorySelected: {
+  chipActive: {
     backgroundColor: '#006666',
+    borderColor: '#6BA292',
   },
-  categoryText: {
+  chipText: {
+    color: '#6BA292',
     fontSize: 14,
-    color: '#006666',
     fontWeight: '500',
   },
-  categoryTextSelected: {
+  chipTextActive: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
 

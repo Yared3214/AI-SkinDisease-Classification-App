@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 const categories = [
   'All',
@@ -44,7 +45,7 @@ const CategoryFilter = ({ selected, onSelect }) => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#EAF5F1',
+    backgroundColor: '#F8FDFB',
     paddingVertical: 6,
     borderBottomWidth: 0.3,
     borderColor: '#D6E6E1',
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
     height: 36, // ✅ keeps consistent height
   },
   chipActive: {
-    backgroundColor: '#6BA292',
+    backgroundColor: '#006666',
     borderColor: '#6BA292',
   },
   chipText: {

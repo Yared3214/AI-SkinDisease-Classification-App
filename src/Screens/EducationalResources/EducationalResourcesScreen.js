@@ -13,7 +13,6 @@ import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import LinearGradient from 'react-native-linear-gradient';
 
 import Header from './components/Header';
 import SearchBar from './components/SearchBar';
@@ -109,7 +108,6 @@ const EducationalResourcesScreen = () => {
   }
 
   return (
-    <LinearGradient colors={['#F8FDFB', '#E9F7F5']} style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <Header />
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
@@ -135,13 +133,12 @@ const EducationalResourcesScreen = () => {
           <AddResourceButton onPress={() => navigation.navigate('add-resource')} />
         )}
       </SafeAreaView>
-    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, paddingHorizontal: 20 },
+  container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#F8FDFB' },
 });
 
 export default EducationalResourcesScreen;

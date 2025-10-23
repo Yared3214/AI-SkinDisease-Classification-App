@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SkinImageUploadScreen from '../Screens/HomeScreen/screens/SkinAnalysis/SkinImageUploadScreen';
+import SkinImageUploadScreen from '../Screens/HomeScreen/HomeScreen';
 import ResultScreen from '../Screens/ResultScreen';
 
 export default function HomeScreenStackNav() {

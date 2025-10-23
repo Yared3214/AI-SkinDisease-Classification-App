@@ -32,6 +32,7 @@ const ResourceCard = ({ item, onPress }) => (
 const styles = StyleSheet.create({
   card: {
     marginBottom: 15,
+    marginTop: 8,
     borderRadius: 15,
     overflow: 'hidden',
     elevation: 3,

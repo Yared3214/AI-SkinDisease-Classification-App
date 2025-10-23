@@ -14,6 +14,7 @@ import ProductCard from './components/ProductCard';
 import EmptyState from './components/EmptyState';
 import SearchBar from './components/SearchBar';
 import CategoryFilter from './components/CategoryFilter';
+import LinearGradient from 'react-native-linear-gradient';
 
 const SkinCareProductsScreen = () => {
   const navigation = useNavigation();
@@ -75,6 +76,7 @@ const SkinCareProductsScreen = () => {
   }
 
   return (
+    <LinearGradient colors={['#F8FDFB', '#E9F7F5']} style={{ flex: 1 }}>
     <View style={styles.container}>
       <Header />
       <SearchBar value={searchText} onChange={setSearchText} />
@@ -109,11 +111,12 @@ const SkinCareProductsScreen = () => {
         />
       )}
     </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F9F7' },
+  container: { flex: 1, backgroundColor: '#F8FDFB'},
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: 10 },
 });
