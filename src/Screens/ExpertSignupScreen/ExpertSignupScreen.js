@@ -48,36 +48,6 @@ const ExpertSignupScreen = () => {
   const [loading, setLoading] = useState(false);
 
   /* ------------------------- 📋 Validation ------------------------- */
-  // const validateForm = () => {
-  //   if (
-  //     !name ||
-  //     !email ||
-  //     !specialization ||
-  //     !experience ||
-  //     !licenseNumber ||
-  //     !pastWorkplaces ||
-  //     !bio ||
-  //     !password ||
-  //     !confirmPassword ||
-  //     !certFile
-  //   ) {
-  //     setError('All fields including certification document are required.');
-  //     return false;
-  //   }
-  //   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  //     setError('Please enter a valid email address');
-  //     return false;
-  //   }
-  //   if (password.length < 8) {
-  //     setError('Password must be at least 8 characters');
-  //     return false;
-  //   }
-  //   if (password !== confirmPassword) {
-  //     setError('Passwords do not match');
-  //     return false;
-  //   }
-  //   return true;
-  // };
 
   const validateInputs = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -92,15 +92,6 @@ const uploadImageToSupabase = async (imageFile) => {
   }
 };
 
-
-  // const uploadImageToCloudinary = async (uri) => {
-  //   const data = new FormData();
-  //   data.append('file', { uri, type: 'image/jpeg', name: 'upload.jpg' });
-  //   data.append('upload_preset', UPLOAD_PRESET);
-  //   const res = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, data);
-  //   return res.data.secure_url;
-  // };
-
   const uploadToSupabase = async (file) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}.${fileExt}`;

@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PatientProfileScreen from '../Screens/ProfileScreen/PatientProfileScreen';
-import EditProfileScreen from '../Screens/EditProfileScreen';
+import EditProfileScreen from '../Screens/EditProfile/EditProfileScreen';
 
 export default function ProductsScreenStackNav() {
     const Stack = createNativeStackNavigator();
