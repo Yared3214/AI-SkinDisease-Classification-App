@@ -3,7 +3,6 @@ import { View, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-n
 import LinearGradient from 'react-native-linear-gradient';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import axios from 'axios';
 import RNBlobUtil from 'react-native-blob-util';
 import { Buffer } from 'buffer';
 import { supabase } from '../../supabaseClient';

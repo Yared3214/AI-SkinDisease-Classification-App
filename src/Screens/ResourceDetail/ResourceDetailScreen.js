@@ -146,7 +146,7 @@ const ResourceDetailScreen = () => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20, },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
 

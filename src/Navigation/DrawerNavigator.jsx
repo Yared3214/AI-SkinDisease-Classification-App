@@ -9,7 +9,7 @@ import TabNavigation from './TabNavigation';
 // import NotificationScreen from '../Screens/HistoryScreen';
 import AvailabilityScreen from '../Screens/AvailabilityScreen/AvailabilityScreen';
 import AppointmentStackScreen from './AppointmentStackScreen';
-import MyAppointmentsScreen from '../Screens/MyAppointmentsScreen';
+import MyAppointmentsScreen from '../Screens/MyAppointments/MyAppointmentsScreen';
 import ExpertAppointmentsScreen from '../Screens/ExpertAppointmentsScreen';
 import ChatScreen from '../Screens/ChatScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent ';

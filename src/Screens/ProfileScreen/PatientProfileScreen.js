@@ -61,7 +61,7 @@ const PatientProfileScreen = () => {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { flex: 1, backgroundColor: '#F8FDFB' },
 });
 
 export default PatientProfileScreen;

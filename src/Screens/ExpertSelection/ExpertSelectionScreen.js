@@ -68,7 +68,7 @@ export default ExpertSelectionScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAF9',
+    backgroundColor: '#F8FDFB',
     paddingHorizontal: 20,
   },
   loaderContainer: {

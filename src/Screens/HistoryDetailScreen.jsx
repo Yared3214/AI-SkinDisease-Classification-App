@@ -66,7 +66,7 @@ const HistoryDetailScreen = () => {
     };
     
     const styles = StyleSheet.create({
-      container: { padding: 20, backgroundColor: '#fff' },
+      container: { padding: 20, backgroundColor: '#F8FDFB' },
       header: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#6BA292' },
       uploadedImage: { width: '100%', height: 200, borderRadius: 10, marginBottom: 5 },
       imageLabel: { textAlign: 'center', color: '#555', marginBottom: 10 },

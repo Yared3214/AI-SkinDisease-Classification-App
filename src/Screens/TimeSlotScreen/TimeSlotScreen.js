@@ -240,7 +240,7 @@ const TimeSlotScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FDFB',
     padding: 20,
   },
   expertCard: {

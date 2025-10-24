@@ -190,7 +190,7 @@ export default AvailabilityScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8faf9',
+    backgroundColor: '#F8FDFB',
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FDFB'
   },
   profileCard: {
     flexDirection: 'row',

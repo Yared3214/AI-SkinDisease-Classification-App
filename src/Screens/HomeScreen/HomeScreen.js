@@ -82,7 +82,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: '#F8FDFB' },
   introSection: { padding: 20, marginTop: 10 },
   welcomeText: {
     fontSize: 22,

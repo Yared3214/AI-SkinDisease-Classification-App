@@ -103,7 +103,7 @@ const HistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", paddingTop: 16, paddingHorizontal: 10 },
+  container: { flex: 1, backgroundColor: '#F8FDFB', paddingTop: 16, paddingHorizontal: 10 },
   header: {
     fontSize: 22,
     fontWeight: "bold",
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   condition: { fontSize: 16, fontWeight: "bold", color: "#333" },
   confidence: { fontSize: 13, color: "#666", marginTop: 2 },
   date: { fontSize: 12, color: "#999", marginTop: 4 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: '#F8FDFB' },
   emptyText: { fontSize: 16, color: "#666" },
 });
 
