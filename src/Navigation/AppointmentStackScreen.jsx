@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ExpertSelectionScreen from '../Screens/ExpertSelectionScreen';
+import ExpertSelectionScreen from '../Screens/ExpertSelection/ExpertSelectionScreen';
 import TimeSlotScreen from '../Screens/TimeSlotScreen';
 
 export default function AppointmentStackScreen() {
