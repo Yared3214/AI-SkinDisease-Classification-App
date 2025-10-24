@@ -7,7 +7,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import TabNavigation from './TabNavigation';
 // import NotificationScreen from '../Screens/HistoryScreen';
-import AvailabilityScreen from '../Screens/AvailabilityScreen';
+import AvailabilityScreen from '../Screens/AvailabilityScreen/AvailabilityScreen';
 import AppointmentStackScreen from './AppointmentStackScreen';
 import MyAppointmentsScreen from '../Screens/MyAppointmentsScreen';
 import ExpertAppointmentsScreen from '../Screens/ExpertAppointmentsScreen';

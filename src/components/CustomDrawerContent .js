@@ -27,8 +27,6 @@ const CustomDrawerContent = (props) => {
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
