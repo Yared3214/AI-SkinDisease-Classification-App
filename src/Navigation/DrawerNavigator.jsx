@@ -10,7 +10,7 @@ import TabNavigation from './TabNavigation';
 import AvailabilityScreen from '../Screens/AvailabilityScreen/AvailabilityScreen';
 import AppointmentStackScreen from './AppointmentStackScreen';
 import MyAppointmentsScreen from '../Screens/MyAppointments/MyAppointmentsScreen';
-import ExpertAppointmentsScreen from '../Screens/ExpertAppointmentsScreen';
+import ExpertAppointmentsScreen from '../Screens/ExpertAppointments/ExpertAppointmentsScreen';
 import ChatScreen from '../Screens/ChatScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent ';
 import HistoryScreenStackNav from './HistorySceenStackNav';
